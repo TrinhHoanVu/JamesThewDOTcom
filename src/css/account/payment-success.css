@@ -1,0 +1,56 @@
+.payment-confirmation-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f4f9f4; /* Màu nền nhẹ nhàng */
+    font-family: "Arial", sans-serif;
+    margin: 0;
+}
+
+.payment-confirmation-box {
+    text-align: center;
+    background: white;
+    padding: 50px;
+    border-radius: 12px;
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+    max-width: 450px;
+    width: 90%;
+}
+
+.confirmation-icon {
+    width: 90px;
+    height: 90px;
+    margin-bottom: 25px;
+}
+
+h1 {
+    color: #2e7d32; /* Xanh lá đậm */
+    font-size: 26px;
+    margin-bottom: 15px;
+    font-weight: bold;
+}
+
+p {
+    color: #4f4f4f; /* Màu chữ xám */
+    font-size: 16px;
+    margin-bottom: 25px;
+    line-height: 1.5;
+}
+
+.confirmation-button {
+    padding: 12px 25px;
+    background-color: #2e7d32; /* Màu xanh lá đậm */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.confirmation-button:hover {
+    background-color: #276527; /* Màu xanh đậm hơn khi hover */
+    transform: scale(1.05); /* Hiệu ứng phóng to nhẹ khi hover */
+}
