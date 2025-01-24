@@ -1,14 +1,20 @@
 .cmtForm-container {
-    width: 1050px;
+    width: 100%;
+    max-width: 1050px;
+    max-height: 700px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    padding: 0 10px;
+    box-sizing: border-box;
 }
+
 
 .cmtForm-list {
     margin-bottom: 20px;
     margin-top: 20px;
+    
 }
 
 
