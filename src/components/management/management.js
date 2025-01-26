@@ -1,24 +1,30 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import "../../css/management/management.css";
+import { DataContext } from "../../context/DatabaseContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import AccountDetail from "./accountDetail";
 import ContestManagement from "./contestmanagement";
 import TipManagement from "./tipmanagement";
 import RecipeManagement from "./recipemanagement";
+import PasswordManagement from "./passwordManagement";
 
 
 const Management = () => {
   const location = useLocation();
-  const { isProfile, isContest, isRecipe, isTip } = location.state || {
+  const { tokenInfor } = useContext(DataContext);
+
+  const { isProfile, isContest, isRecipe, isTip, isPassword } = location.state || {
     isProfile: true,
     isContest: false,
     isRecipe: false,
-    isTip: false
+    isTip: false,
+    isPassword: false
   };
   const [contestStatus, setContestStatus] = useState(isContest);
   const [tipStatus, setTipStatus] = useState(isTip);
   const [recipeStatus, setRecipeStatus] = useState(isRecipe);
   const [profileStatus, setProfileStatus] = useState(isProfile);
+  const [passwordStatus, setPasswordStatus] = useState(isPassword);
 
   const navigate = useNavigate();
 
@@ -29,16 +35,27 @@ const Management = () => {
       handleChangeRecipe();
     } else if (isTip) {
       handleChangeTip();
-    } else {
+    } else if (isProfile) {
       handleChangeProfile();
+    } else {
+      handleChangePassword();
     }
-  }, [isProfile, isContest, isRecipe, isTip]);
+  }, [isProfile, isContest, isRecipe, isTip, isPassword]);
 
   const handleChangeContest = () => {
     setContestStatus(true);
     setRecipeStatus(false);
     setTipStatus(false)
     setProfileStatus(false)
+    setPasswordStatus(false)
+  }
+
+  const handleChangePassword = () => {
+    setContestStatus(false);
+    setRecipeStatus(false);
+    setTipStatus(false)
+    setProfileStatus(false)
+    setPasswordStatus(true)
   }
 
   const handleChangeRecipe = () => {
@@ -46,6 +63,7 @@ const Management = () => {
     setRecipeStatus(true);
     setTipStatus(false)
     setProfileStatus(false)
+    setPasswordStatus(false)
   }
 
   const handleChangeTip = () => {
@@ -53,6 +71,7 @@ const Management = () => {
     setRecipeStatus(false);
     setTipStatus(true)
     setProfileStatus(false)
+    setPasswordStatus(false)
   }
 
   const handleChangeProfile = () => {
@@ -60,6 +79,7 @@ const Management = () => {
     setRecipeStatus(false);
     setTipStatus(false)
     setProfileStatus(true)
+    setPasswordStatus(false)
   }
 
   const logOut = () => {
@@ -72,14 +92,16 @@ const Management = () => {
         <div className="management-title">MANAGEMENT</div>
         <div className="management-slide-option">
           <div className="management-item" onClick={handleChangeProfile}>Profile</div>
-          <div className="management-item" onClick={handleChangeContest}>Contest</div>
-          <div className="management-item" onClick={handleChangeRecipe}>Recipe</div>
-          <div className="management-item" onClick={handleChangeTip}>Tip</div>
+          <div className="management-item" onClick={handleChangePassword}>Password</div>
+          {tokenInfor.role !== "USER" && (<div className="management-item" onClick={handleChangeContest}>Contest</div>)}
+          {tokenInfor.role !== "USER" && (<div className="management-item" onClick={handleChangeRecipe}>Recipe</div>)}
+          {tokenInfor.role !== "USER" && (<div className="management-item" onClick={handleChangeTip}>Tip</div>)}
           <div className="management-item" onClick={logOut}>Log out</div>
         </div>
       </div>
       <div className="management-function">
         {profileStatus && (<div><AccountDetail /></div>)}
+        {passwordStatus && (<div><PasswordManagement /></div>)}
         {contestStatus && (<div><ContestManagement /></div>)}
         {recipeStatus && (<div><RecipeManagement /></div>)}
         {tipStatus && (<div><TipManagement /></div>)}

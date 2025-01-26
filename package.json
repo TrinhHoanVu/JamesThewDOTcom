@@ -19,6 +19,7 @@
     "eslint-plugin-react-hooks": "^5.2.0-canary-5b51a2b9-20250116",
     "jquery": "^3.7.1",
     "jwt-decode": "^4.0.0",
+    "lucide-react": "^0.474.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.54.2",

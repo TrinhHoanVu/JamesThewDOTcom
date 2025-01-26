@@ -1,17 +1,17 @@
 import axios from "axios";
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { DataContext } from "../../context/DatabaseContext";
 import { Country, State, City } from 'country-state-city';
 import "../../css/management/account-profile.css"
 
 function AccountDetail() {
     const { tokenInfor, setTokenInfor } = useContext(DataContext);
-    const [name, setName] = useState(tokenInfor?.unique_name);
-    const [password, setPassword] = useState("");
-    const [address, setAddress] = useState(tokenInfor?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/streetaddress"]);
-    const [phoneNumber, setPhoneNumber] = useState(tokenInfor?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/mobilephone"]);
+    const [name, setName] = useState("");
+    const [address, setAddress] = useState("");
+    const [phoneNumber, setPhoneNumber] = useState("");
     const isUser = tokenInfor?.role;
     const email = tokenInfor?.email;
+    const [loggedUser, setLoggedUser] = useState([]);
 
     const [countries, setCountries] = useState(Country.getAllCountries());
     const [states, setStates] = useState([]);
@@ -25,6 +25,22 @@ function AccountDetail() {
     const [initialLoadCity, setInitialLoadCity] = useState(true);
 
     const [showSelectBoxes, setShowSelectBoxes] = useState(false);
+
+    useEffect(() => {
+        fetchAccountData();
+    }, [])
+
+    const fetchAccountData = async () => {
+        try {
+            const respone = await axios.get(`http://localhost:5231/api/Account/${tokenInfor.email}`);
+            setLoggedUser(respone.data);
+            setName(respone.data.name);
+            setAddress(respone.data.address);
+            setPhoneNumber(respone.data.phoneNumber);
+        } catch (err) {
+            console.log(err)
+        }
+    }
 
     const handleCountryChange = (country) => {
         if (!country) return;
@@ -89,25 +105,20 @@ function AccountDetail() {
         setShowSelectBoxes(false)
     }
 
-
     async function handleUpdateProfile(e) {
         e.preventDefault();
 
-        await axios.put("http://localhost:5231/api/Account/updateProfile", { email, name, address, phoneNumber })
-            .then(res => {
-                if (res.status === 200) {
-                    console.log(address)
-                    tokenInfor["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/streetaddress"] = address
-                    tokenInfor["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/mobilephone"] = phoneNumber
-                    
-                    tokenInfor["unique_name"] = name
-                    setTokenInfor(tokenInfor)
-                    console.log(tokenInfor["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/mobilephone"])
-
-                    alert("Profile updated successfully!");
-                }
-            })
-            .catch(err => console.log(err))
+        try {
+            await axios.put("http://localhost:5231/api/Account/updateProfile", { email, name, address, phoneNumber })
+                .then(res => {
+                    if (res.status === 200) {
+                        alert("Profile updated successfully!");
+                    }
+                })
+                .catch(err => console.log(err))
+        } catch (err) {
+            console.log(err)
+        }
     }
     return (
         <div className="profile-container">
