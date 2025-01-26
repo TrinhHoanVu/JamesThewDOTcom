@@ -19,6 +19,7 @@ const PaymentConfirmation = () => {
                 const { token, refreshToken } = response.data;
                 const inforToken = JSON.stringify({ token, refreshToken });
                 localStorage.setItem("inforToken", inforToken);
+
             } catch (error) {
                 console.log("Error payment: ", error);
             }
@@ -27,13 +28,16 @@ const PaymentConfirmation = () => {
         if (orderId) {
             capturePayment(orderId);
         }
-
-
-
     }, [])
 
     const handleRedirect = () => {
-        navigate("/");
+        const previousPage = localStorage.getItem("previousPage");
+        if (previousPage) {
+            navigate(previousPage);
+            localStorage.removeItem("previousPage");
+        } else {
+            navigate("/");
+        }
     };
 
     return (

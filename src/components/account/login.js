@@ -1,5 +1,5 @@
 import React, { useContext, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import "../../css/account/login.css";
@@ -11,10 +11,11 @@ const Login = () => {
   const { tokenInfor, setTokenInfor } = useContext(DataContext)
   const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from || "/";
 
   async function handleLogin(e) {
     e.preventDefault();
-
     await axios.post("http://localhost:5231/api/Account/login", { email, password })
       .then(res => {
         if (res.status === 200) {
@@ -27,9 +28,13 @@ const Login = () => {
           const allowedRoles = ["SUPERADMIN", "ADMIN"];
 
           if (allowedRoles.includes(tokenDecode.role)) {
-            navigate("/management", { state: { isProfile: true, isContest: false, isRecipe: false, isTip: false } });
+            if (from === "/") {
+              navigate("/management", { state: { isProfile: true, isContest: false, isRecipe: false, isTip: false } });
+            } else {
+              navigate(from)
+            }
           } else {
-            navigate("/")
+            navigate(from)
           }
 
         }
@@ -50,11 +55,10 @@ const Login = () => {
           <div className="form-group">
             <label>Email:</label>
             <input
-              type="email"
+              type="text"
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              required
             />
           </div>
           <div className="form-group">
@@ -64,7 +68,6 @@ const Login = () => {
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required
             />
           </div>
           {errorMessage && <p className="message">{errorMessage}</p>}
