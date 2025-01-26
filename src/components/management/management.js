@@ -1,13 +1,20 @@
 import React, { useState, useEffect } from "react";
 import "../../css/management/management.css";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import AccountDetail from "./accountDetail";
 import ContestManagement from "./contestmanagement";
 import TipManagement from "./tipmanagement";
 import RecipeManagement from "./recipemanagement";
 
 
-const Management = (isProfile, isContest, isRecipe, isTip) => {
+const Management = () => {
+  const location = useLocation();
+  const { isProfile, isContest, isRecipe, isTip } = location.state || {
+    isProfile: true,
+    isContest: false,
+    isRecipe: false,
+    isTip: false
+  };
   const [contestStatus, setContestStatus] = useState(isContest);
   const [tipStatus, setTipStatus] = useState(isTip);
   const [recipeStatus, setRecipeStatus] = useState(isRecipe);
@@ -16,8 +23,16 @@ const Management = (isProfile, isContest, isRecipe, isTip) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    handleChangeProfile();
-  }, []);
+    if (isContest) {
+      handleChangeContest();
+    } else if (isRecipe) {
+      handleChangeRecipe();
+    } else if (isTip) {
+      handleChangeTip();
+    } else {
+      handleChangeProfile();
+    }
+  }, [isProfile, isContest, isRecipe, isTip]);
 
   const handleChangeContest = () => {
     setContestStatus(true);

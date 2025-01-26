@@ -6,10 +6,10 @@ import SignUp from "../components/account/signup"
 import ResetPassword from "../components/account/resetpassword"
 import VerifyCode from "../components/account/verifyCode"
 import Management from "../components/management/management"
-import AccountDetail from "../components/management/accountDetail"
 import PublicContest from "../components/contest/public-contest"
 import ContestDetail from "../components/contest/contest-detail"
 import PaymentConfirmation from "../components/account/payment-success"
+import AttendeesDetail from "../components/contest/attendees-detail"
 
 const publicRouter = [
     {
@@ -47,6 +47,10 @@ const publicRouter = [
     {
         path: "/success",
         element: <PaymentConfirmation />
+    },
+    {
+        path: "/contest/:contestId/attendees",
+        element: <AttendeesDetail />
     }
 ]
 
