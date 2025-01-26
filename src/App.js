@@ -6,6 +6,7 @@ import { useContext } from "react";
 import { DataContext } from "./context/DatabaseContext";
 import { publicRouter, privateRouter } from "./configs/routerConfig";
 import './index.css';
+import AttendeesDetail from "./components/contest/attendees-detail";
 
 function App() {
   const { tokenInfor } = useContext(DataContext);

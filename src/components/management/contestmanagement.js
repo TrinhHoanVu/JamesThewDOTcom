@@ -1,37 +1,67 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import "../../css/management/contest-magenement.css";
-import { Link } from "react-router-dom"
+import { Link } from "react-router-dom";
 import ContestEditForm from "./contest-edit";
+import $ from "jquery";
+import 'datatables.net-dt/css/dataTables.dataTables.css';
+import "datatables.net";
+import "../../css/management/contest-magenement.css";
+
+// Custom hook to throttle ResizeObserver
+function useThrottledResizeObserver(callback, delay = 200) {
+    const resizeObserverRef = useRef(null);
+    const throttledCallbackRef = useRef(null);
+
+    useEffect(() => {
+        throttledCallbackRef.current = (entries) => {
+            clearTimeout(resizeObserverRef.current);
+            resizeObserverRef.current = setTimeout(() => {
+                callback(entries);
+            }, delay);
+        };
+
+        const observer = new ResizeObserver(throttledCallbackRef.current);
+        const elementsToObserve = document.querySelectorAll('.contest-management-container'); // Adjust the selector
+
+        elementsToObserve.forEach((element) => {
+            observer.observe(element);
+        });
+
+        return () => {
+            observer.disconnect();
+            clearTimeout(resizeObserverRef.current);
+        };
+    }, [callback, delay]);
+
+    return resizeObserverRef;
+}
 
 function ContestManagement() {
     const [contests, setContests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [page, setPage] = useState(1);
-    const [total, setTotal] = useState(0);
     const [attendeesCount, setAttendeesCount] = useState({});
     const [contestEdit, setContestEdit] = useState(false);
     const [idContest, setIdContest] = useState(0);
-    const pageSize = 10;
+
+    useThrottledResizeObserver(() => {
+        if (contests.length > 0) {
+            setTimeout(() => {
+                $("#contestTable").DataTable();
+            }, 500);
+        }
+    });
 
     const fetchContests = async () => {
         try {
-            const response = await axios.get("http://localhost:5231/api/Contest/getAll", {
-                params: { pageNumber: page, pageSize: pageSize },
-            });
-
+            const response = await axios.get("http://localhost:5231/api/Contest/getAll");
             const contestData = response.data.data.$values || [];
             setContests(contestData);
-            setTotal(response.data.total);
             setLoading(false);
         } catch (err) {
             setError("Failed to load contests. Please try again.");
             setLoading(false);
         }
-    }; const reloadContests = async () => {
-        setLoading(true);
-        await fetchContests();
     };
 
     const fetchAttendeesCount = async (contestId) => {
@@ -53,7 +83,7 @@ function ContestManagement() {
 
     useEffect(() => {
         fetchContests();
-    }, [page]);
+    }, []);
 
     useEffect(() => {
         contests.forEach((contest) => {
@@ -61,21 +91,20 @@ function ContestManagement() {
         });
     }, [contests]);
 
-    const handleEdit = (contestId, attendeesCount, status) => {
+    const handleEdit = (contestId, status) => {
         if (status.toUpperCase() === "NOT YET") {
-            setIdContest(contestId)
-            setContestEdit(true)
-        }
-        else {
-            alert(`This contest has already begun`);
+            setIdContest(contestId);
+            setContestEdit(true);
+        } else {
+            alert("This contest has already begun");
         }
     };
 
-    const handleDelete = async (contestId, attendeesCount, status) => {
+    const handleDelete = async (contestId, status) => {
         if (status.toUpperCase() === "NOT YET") {
             if (window.confirm("Are you sure you want to delete this contest?")) {
                 try {
-                    await axios.delete(`http://localhost:5231/api/Contest/delete/${contestId}`, { params: { id: contestId } });
+                    await axios.delete(`http://localhost:5231/api/Contest/delete/${contestId}`);
                     alert("Contest deleted successfully!");
                     fetchContests();
                 } catch (err) {
@@ -83,16 +112,12 @@ function ContestManagement() {
                 }
             }
         } else {
-            alert(`This contest has already begun`);
+            alert("This contest has already begun");
         }
     };
 
-    const handlePrevious = () => {
-        if (page > 1) setPage(page - 1);
-    };
-
-    const handleNext = () => {
-        if (page < Math.ceil(total / pageSize)) setPage(page + 1);
+    const handleAttendeesDetail = (contestId) => {
+        // fetchAttendeesList(contestId);
     };
 
     return (
@@ -104,100 +129,72 @@ function ContestManagement() {
                 ) : error ? (
                     <p className="contest-management-error-message">{error}</p>
                 ) : (
-                    <>
-                        <table className="contest-management-table">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Price ($)</th>
-                                    <th>Attendees</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
+                    <table id="contestTable" className="display">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Price ($)</th>
+                                <th>Attendees</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {contests.map((contest) => (
+                                <tr key={contest.idContest}>
+                                    <td>
+                                        <Link to={`/contest/${contest.idContest}`} className="contest-name-link">
+                                            {contest.name}
+                                        </Link>
+                                    </td>
+                                    <td className="price">
+                                        {contest.price && !isNaN(contest.price) ? contest.price.toFixed(2) : "N/A"}
+                                    </td>
+                                    <td onClick={() => handleAttendeesDetail(contest.idContest)} style={{ cursor: "pointer", color: "blue" }}>
+                                        <Link to={`/contest/${contest.idContest}/attendees`} style={{ cursor: "pointer", color: "blue" }}
+                                            state={{ contestId: contest.name }}>
+                                            {attendeesCount[contest.idContest] || 0}
+                                        </Link>
+                                    </td>
+                                    <td className={`status ${contest.status ? "active" : "inactive"}`}>
+                                        {contest.status}
+                                    </td>
+                                    <td className="actions">
+                                        {contest.status.toUpperCase() !== "FINISHED" ? (
+                                            <>
+                                                <button
+                                                    className="contest-action-button edit"
+                                                    onClick={() => handleEdit(contest.idContest, contest.status)}
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    className="contest-action-button delete"
+                                                    onClick={() => handleDelete(contest.idContest, contest.status)}
+                                                >
+                                                    Delete
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <span className="no-action">Finished</span>
+                                        )}
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                {contests.map((contest) => (
-                                    <tr key={contest.idContest}>
-                                        <td>
-                                            <Link to={`/contest/${contest.idContest}`} className="contest-name-link">
-                                                {contest.name}
-                                            </Link>
-                                        </td>
-                                        <td className="price">
-                                            {contest.price && !isNaN(contest.price) ? contest.price.toFixed(2) : "N/A"}
-                                        </td>
-                                        <td>{attendeesCount[contest.idContest] || 0}</td>
-                                        <td className={`status ${contest.status ? "active" : "inactive"}`}>
-                                            {contest.status}
-                                        </td>
-                                        <td className="actions">
-                                            <button
-                                                className="contest-management-icon-button"
-                                                onClick={() => handleEdit(contest.idContest, attendeesCount[contest.idContest], contest.status)}
-                                            >
-                                                Edit
-                                            </button>
-                                            <button
-                                                className="contest-management-icon-button delete"
-                                                onClick={() => handleDelete(contest.idContest, attendeesCount[contest.idContest], contest.status)}
-                                            >
-                                                Delete
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-
-                        </table>
-                        {total > 10 && (
-                            <div className="contest-management-pagination-controls">
-                                <button
-                                    className="contest-management-button"
-                                    onClick={handlePrevious}
-                                    disabled={page === 1}
-                                >
-                                    Previous
-                                </button>
-                                <span>
-                                    Page {page} of {Math.ceil(total / pageSize)}
-                                </span>
-                                <button
-                                    className="contest-management-button"
-                                    onClick={handleNext}
-                                    disabled={page === Math.ceil(total / pageSize)}
-                                >
-                                    Next
-                                </button>
-                            </div>
-                        )}
-                    </>
+                            ))}
+                        </tbody>
+                    </table>
                 )}
             </div>
             {contestEdit && (
                 <div className="edit-modal-overlay">
                     <div className="edit-modal">
-                        {contestEdit && (
-                            <div className="edit-modal-overlay">
-                                <div className="edit-modal">
-                                    <ContestEditForm
-                                        idContest={idContest}
-                                        onClose={() => setContestEdit(false)}
-                                        reloadContests={reloadContests}
-                                    />
-                                    <button
-                                        className="close-modal-button"
-                                        onClick={() => setContestEdit(false)}
-                                    >
-                                        Close
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-
+                        <ContestEditForm idContest={idContest} onClose={() => setContestEdit(false)} />
+                        <button className="close-modal-button" onClick={() => setContestEdit(false)}>
+                            Close
+                        </button>
                     </div>
                 </div>
             )}
-
         </div>
     );
 }
