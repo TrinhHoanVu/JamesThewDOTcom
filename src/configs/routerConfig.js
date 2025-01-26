@@ -65,7 +65,7 @@ const privateRouter = [
     {
         path: "/management",
         element: <Management defaultTab="profile" />,
-        roles: ["ADMIN", "SUPERADMIN"],
+        roles: ["ADMIN", "SUPERADMIN", "USER"],
         status: true
     }
 ]
