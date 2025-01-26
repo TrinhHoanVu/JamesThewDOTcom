@@ -4,7 +4,6 @@ import axios from "axios";
 function PaymentForm({ user }) {
     const [paymentOption, setPaymentOption] = useState("monthly");
     const [error, setError] = useState("");
-    const [amountPayment, setAmountPayment] = useState(10);
     const [loading, setLoading] = useState(false);
 
     const calculateAmountPayment = () => {
@@ -14,6 +13,9 @@ function PaymentForm({ user }) {
     const createPayment = async () => {
         setLoading(true);
         console.log(user.email)
+
+        localStorage.setItem("previousPage", window.location.pathname + window.location.search);
+
         try {
             const response = await axios.post("http://localhost:5231/api/SubscriptionPayment/create-payment", {
                 Amount: calculateAmountPayment(),
