@@ -7,7 +7,7 @@ import { AiFillLike } from "react-icons/ai";
 import { useNavigate } from "react-router-dom";
 
 
-const CommentForm = ({ contestId }) => {
+const CommentForm = ({ contestId, contest }) => {
     const [comments, setComments] = useState([]);
     const [newComment, setNewComment] = useState('');
     const [showPaymentForm, setShowPaymentForm] = useState(false);
@@ -20,6 +20,8 @@ const CommentForm = ({ contestId }) => {
     const [likedComments, setLikedComments] = useState([]);
     const [statusUser, setStatusUser] = useState(false);
     const [isFetchingLastestComments, , setIsFetchingLastestComments,] = useState(false);
+    const [isNewComment, setIsNewComment] = useState(false);
+    const [editedComment, setEditedComment] = useState("");
 
     const navigate = useNavigate();
 
@@ -39,7 +41,6 @@ const CommentForm = ({ contestId }) => {
         try {
             const response = await axios.get(`http://localhost:5231/api/Account/${tokenInfor.email}`)
             if (response) {
-                console.log(response.data)
                 setUserLogged(response.data)
                 setStatusUser(response.data.status)
             }
@@ -52,14 +53,12 @@ const CommentForm = ({ contestId }) => {
 
     const fetchUserCommented = async () => {
         try {
-            console.log(contestId + " " + userLogged.idAccount)
             const response = await axios.get(`http://localhost:5231/api/Contest/checkCommented`, {
                 params: {
                     contestId: contestId, accountId: userLogged.idAccount
                 }
             });
 
-            console.log(response.data)
             setCommented(response.data.commented)
             if (response.data.commented) {
                 fetchUserComment();
@@ -103,19 +102,16 @@ const CommentForm = ({ contestId }) => {
         }
     };
 
-
     const handleSubmit = async () => {
         if (!newComment.trim()) return;
-    
+
         try {
-            console.log(newComment + " " + userLogged.idAccount + " " + contestId);
-            
             const response = await axios.post('http://localhost:5231/api/Contest/postComment', {
                 content: newComment,
                 contestId,
                 userId: userLogged.idAccount,
             });
-    
+
             const newPostedComment = {
                 idComment: response.data.idComment,
                 content: newComment,
@@ -123,16 +119,15 @@ const CommentForm = ({ contestId }) => {
                 postedDate: new Date().toISOString(),
                 account: userLogged,
             };
-            
+
             setLoggedAccountComment(newPostedComment);
-            setNewComment('');  
+            setNewComment('');
             setCommented(true);
             setComments([newPostedComment, ...comments]);
         } catch (error) {
             console.error('Error adding comment:', error);
         }
     };
-    
 
     const handleSetDefaultComment = () => {
         setNewComment('');
@@ -154,7 +149,6 @@ const CommentForm = ({ contestId }) => {
             console.error('Error liking comment:', error);
         }
     };
-
 
     const renderComments = (commentList) => {
         return commentList
@@ -229,11 +223,32 @@ const CommentForm = ({ contestId }) => {
         setShowPaymentForm(false);
     };
 
+    const handleDeleteComment = async () => {
+        alert("Are you sure you want to delete this comment?");
+        try {
+            await axios.delete(`http://localhost:5231/api/Contest/deleteComment`, {
+                params: { idComment: loggedAccountComment.idComment }
+            });
+            setCommented(false);
+            setLoggedAccountComment([]);
+            setComments(comments.filter(comment => comment.idComment !== loggedAccountComment.idComment));
+        } catch (error) {
+            console.error('Error deleting comment:', error);
+        }
+    }
+
     const handleEditComment = () => {
         if (buttonComment === "Edit comment") {
+            setIsNewComment(true);
             setButtonComment("Save comment");
+
+            if (editedComment.trim() === "") {
+                setEditedComment(loggedAccountComment.content);
+            }
+
         }
         else {
+            setIsNewComment(false);
             setButtonComment("Edit comment");
         }
     }
@@ -246,7 +261,6 @@ const CommentForm = ({ contestId }) => {
             if (response.data) {
                 setLikedComments(response.data.$values)
             }
-            console.log(likedComments)
         } catch (error) {
             console.log(error)
         }
@@ -261,39 +275,54 @@ const CommentForm = ({ contestId }) => {
                     <h5 style={{ cursor: "pointer" }} onClick={fetchLastestComments}>Lastest comments</h5>
                 </div>
             </div>
-            {!commented ? (<div>
-                <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-                    <textarea
-                        className="cmtForm-input"
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                        placeholder="Add a comment..."
-                        onClick={handleCommentClick}
-                        readOnly={!statusUser}
-                    />
-                    <div style={{ display: "flex", flexDirection: "row", justifyContent: "end", width: "1000px" }}>
-                        <div></div>
-                        {newComment && <span className='cmtForm-cancel-button' onClick={handleSetDefaultComment}>Cancel</span>}
-                        {newComment && <button className="cmtForm-submit-button" onClick={handleSubmit}>Submit</button>}
+            {contest.status !== "FINISHED" ? (
+                !commented ? (
+                    <div>
+                        <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                            <textarea
+                                className="cmtForm-input"
+                                value={newComment}
+                                onChange={(e) => setNewComment(e.target.value)}
+                                placeholder="Add a comment..."
+                                onClick={handleCommentClick}
+                                readOnly={!statusUser}
+                            />
+                            <div style={{ display: "flex", flexDirection: "row", justifyContent: "end", width: "1000px" }}>
+                                {newComment && <span className='cmtForm-cancel-button' onClick={handleSetDefaultComment}>Cancel</span>}
+                                {newComment && <button className="cmtForm-submit-button" onClick={handleSubmit}>Submit</button>}
+                            </div>
+                        </div>
                     </div>
+                ) : (
+                    <div style={{ marginTop: "20px", width: "1000px" }}>
+                        <strong>Your comment</strong> <br />
+                        {isNewComment ? <textarea
+                            name="editcomment"
+                            id="editcomment"
+                            style={{ border: "none", borderBottom: "1px solid black", width: "1000px", height: "100px" }}
+                            value={loggedAccountComment.content}
+                            onChange={(e) => setEditedComment(e.target.value)}
+                        /> : loggedAccountComment.content}
+                        <br />
+                        <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", marginTop: "10px" }}>
+                            <div style={{ textAlign: "left" }}>
+                                <span style={{ fontSize: "20px" }}><AiFillLike /></span>
+                                <span style={{ fontSize: "13px", paddingBottom: "5px" }}>{loggedAccountComment.likes}</span>
+                            </div>
+                            <div style={{ textAlign: "right", display: "flex", flexDirection: "row", gap: "10px" }}>
+                                <span className="cmtForm-submit-button" onClick={handleDeleteComment}>Delete</span>
+                                <span className="cmtForm-submit-button" onClick={handleEditComment}>{buttonComment}</span>
+                            </div>
+                        </div>
+                        <hr />
+                    </div>
+                )
+            ) : (
+                <div style={{ marginTop: "20px", fontSize: "16px", fontWeight: "bold", color: "red" }}>
+                    Comments are disabled as the contest has finished.
                 </div>
-            </div>) : (<div style={{ marginTop: "20px", width: "1000px" }}>
-                <strong>Your comment</strong> <br />
-                {loggedAccountComment.content}
-                <br />
-                <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", marginTop: "10px" }}>
-                    <div style={{ textAlign: "left" }}>
-                        <span style={{ fontSize: "20px" }}><AiFillLike /></span>
-                        <span style={{ fontSize: "13px", paddingBottom: "5px" }}>{loggedAccountComment.likes}</span>
-                    </div>
-                    <div style={{ textAlign: "right" }}>
-                        <span className="cmtForm-submit-button" onClick={handleEditComment}>{buttonComment}</span>
-                    </div>
-                </div>
-
-                <hr />
-            </div>
             )}
+
             <div className="cmtForm-list">{renderComments(comments)}</div>
             {showPaymentForm && !statusUser && (
                 <div className="cmtForm-overlay">
