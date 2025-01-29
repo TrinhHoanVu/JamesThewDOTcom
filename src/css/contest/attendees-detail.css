@@ -136,3 +136,14 @@
 .selected-comments-container h2 {
     margin-bottom: 15px;
 }
+
+.compare-button {
+    background-color: #e67e22;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-top: 10px;
+    width: 100px;
+}
