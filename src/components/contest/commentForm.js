@@ -226,7 +226,7 @@ const CommentForm = ({ contestId, contest }) => {
     const handleDeleteComment = async () => {
         const confirmDelete = window.confirm("Are you sure you want to delete this comment?");
         if (!confirmDelete) return;
-        
+
         try {
             await axios.delete(`http://localhost:5231/api/Contest/deleteComment`, {
                 params: { idComment: loggedAccountComment.idComment }
@@ -305,7 +305,7 @@ const CommentForm = ({ contestId, contest }) => {
                             value={loggedAccountComment.content}
                             onChange={(e) => setEditedComment(e.target.value)}
                         /> : loggedAccountComment.content}
-                        
+
                         <br />
                         <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", marginTop: "10px" }}>
                             <div style={{ textAlign: "left" }}>
