@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
-import $, { param } from "jquery";
+import $ from "jquery";
 import 'datatables.net-dt/css/dataTables.dataTables.css';
 import "datatables.net";
 import "../../css/contest/attendees-detail.css";
@@ -193,8 +193,6 @@ function AttendeesDetail() {
             alert("Failed to approve comments. Please try again.");
         }
     };
-
-
 
     return (
         <div className="attendees-modal-overlay">
