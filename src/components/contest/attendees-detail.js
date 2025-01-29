@@ -5,6 +5,7 @@ import $ from "jquery";
 import 'datatables.net-dt/css/dataTables.dataTables.css';
 import "datatables.net";
 import "../../css/contest/attendees-detail.css";
+import { FaCheck } from "react-icons/fa";
 
 function useThrottledResizeObserver(callback, delay = 200) {
     const resizeObserverRef = useRef(null);
@@ -40,18 +41,21 @@ function AttendeesDetail() {
     const [selectedComments, setSelectedComments] = useState([]);
     const navigate = useNavigate();
     const tableRef = useRef(null);
+    const compareTableRef = useRef(null)
     const [tableCompare, setTableCompare] = useState(false);
-    const [checkedState, setCheckedState] = useState(
-        new Array(attendeesList.length).fill(false)
-    );
+    const [checkedState, setCheckedState] = useState();
 
     const handleClick = (position) => {
-        const updatedCheckedState = checkedState.map((item, index) =>
-            index === position ? !item : item
-        );
-
-        setCheckedState(updatedCheckedState);
+        console.log(checkedState)
+        console.log(position)
+        console.log(checkedState[position])
+        setCheckedState((prevState) => {
+            const updatedState = [...prevState];
+            updatedState[position] = !prevState[position];
+            return updatedState;
+        });
     };
+    // console.log(checkedState[0])
     useThrottledResizeObserver(() => {
         if (attendeesList.length > 0) {
             $(tableRef.current).DataTable();
@@ -62,6 +66,10 @@ function AttendeesDetail() {
         fetchAttendeesList(contestId);
     }, [contestId]);
 
+    useEffect(() => {
+        setCheckedState(new Array(attendeesList.length).fill(false));
+    }, [attendeesList]);
+
     const fetchAttendeesList = async (contestId) => {
         try {
             const response = await axios.get(`http://localhost:5231/api/Contest/getTopComments`, {
@@ -70,7 +78,7 @@ function AttendeesDetail() {
 
             if (response.data) {
                 setAttendeesList(response.data.$values || []);
-                console.log("Attendees list:", response.data.$values);
+                // console.log("Attendees list:", response.data.$values);
             }
         } catch (err) {
             console.error("Error fetching attendees list:", err);
@@ -103,6 +111,13 @@ function AttendeesDetail() {
         console.log("Selected comments:", selectedComments);
         if (selectedComments.length > 1) {
             setTableCompare(true);
+
+            setTimeout(() => {
+                compareTableRef.current?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                });
+            }, 0);
         } else {
             alert("Please select more than two comments to compare.");
         }
@@ -111,7 +126,7 @@ function AttendeesDetail() {
     const handleSaveChanges = async () => {
         try {
             const promises = attendeesList
-                .filter(attendee => attendee.mark) 
+                .filter(attendee => attendee.mark)
                 .map(attendee => axios.post(`http://localhost:5231/api/Contest/updateMark/${attendee.idComment}`, {
                     mark: attendee.mark
                 }));
@@ -140,8 +155,6 @@ function AttendeesDetail() {
         setTableCompare(false);
     };
 
-
-
     return (
         <div className="attendees-modal-overlay">
             <div className="attendees-modal">
@@ -166,6 +179,7 @@ function AttendeesDetail() {
                             <th className="name-column">Name</th>
                             <th className="comment-column">Comment</th>
                             <th className="likes-column">Likes</th>
+                            <th className="status-column">Status</th>
                             <th className="evaluate-column">Mark</th>
                         </tr>
                     </thead>
@@ -174,17 +188,12 @@ function AttendeesDetail() {
                             attendeesList.map((attendee, index) => (
                                 <tr key={index}>
                                     <td style={{ textAlign: "center" }} onClick={() => addCommentsToCompare(attendee)}>
-                                        <input
-                                            type="checkbox"
-                                            id={`checkbox-${index}`}
-                                            name={`checkbox-${index}`}
-                                            checked={checkedState[index]}
-                                            onChange={() => handleClick(index)}
-                                        />
+                                        {checkedState[index] ? <FaCheck /> : <div></div>}
                                     </td>
                                     <td>{attendee.account.name}</td>
                                     <td>{attendee.content}</td>
                                     <td style={{ textAlign: "left" }}>{attendee.likes}</td>
+                                    <td>{attendee.isApproved ? "Approved" : "Waiting"}</td>
                                     <td>
                                         <input type="number"
                                             className="evaluate-input"
@@ -205,6 +214,7 @@ function AttendeesDetail() {
                             </tr>
                         )}
                     </tbody>
+
                 </table>
                 <div style={{ display: "flex", justifyContent: "start", flexDirection: "row", gap: "10px" }}>
                     <button className="compare-button" onClick={handleCompare}>
@@ -220,7 +230,7 @@ function AttendeesDetail() {
                 <br /><br /><br />
 
                 {tableCompare && (
-                    <div className="selected-comments-container">
+                    <div className="selected-comments-container" ref={compareTableRef}>
                         <div style={{ textAlign: "center", display: "flex", alignItems: "center", justifyContent: "space-between", flexDirection: "row", height: "30px" }}>
                             <div style={{ textAlign: "center", width: "97%" }}>
                                 <h2>Selected Comments</h2>
