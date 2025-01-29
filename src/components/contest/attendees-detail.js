@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
-import $ from "jquery";
+import $, { param } from "jquery";
 import 'datatables.net-dt/css/dataTables.dataTables.css';
 import "datatables.net";
 import "../../css/contest/attendees-detail.css";
@@ -45,17 +45,6 @@ function AttendeesDetail() {
     const [tableCompare, setTableCompare] = useState(false);
     const [checkedState, setCheckedState] = useState();
 
-    const handleClick = (position) => {
-        console.log(checkedState)
-        console.log(position)
-        console.log(checkedState[position])
-        setCheckedState((prevState) => {
-            const updatedState = [...prevState];
-            updatedState[position] = !prevState[position];
-            return updatedState;
-        });
-    };
-    // console.log(checkedState[0])
     useThrottledResizeObserver(() => {
         if (attendeesList.length > 0) {
             $(tableRef.current).DataTable();
@@ -86,16 +75,27 @@ function AttendeesDetail() {
         }
     };
 
-    const addCommentsToCompare = (attendee) => {
+    const addCommentsToCompare = (index) => {
+
+        setCheckedState((prevState) => {
+            const updatedState = [...prevState];
+            updatedState[index] = !prevState[index];
+            return updatedState;
+        });
+
         setSelectedComments((prevSelectedComments) => {
-            if (prevSelectedComments.some(comment => comment.content === attendee.content)) {
-                return prevSelectedComments;
+            const isCommentSelected = prevSelectedComments.some(comment => comment.content === attendeesList[index].content);
+
+            let updatedComments;
+            if (isCommentSelected) {
+                updatedComments = prevSelectedComments.filter(comment => comment.content !== attendeesList[index].content);
+            } else {
+                updatedComments = [...prevSelectedComments, attendeesList[index]];
+                if (updatedComments.length > 3) updatedComments = updatedComments.slice(1);
             }
 
-            const updatedComments = [...prevSelectedComments, attendee];
-
-            if (updatedComments.length > 3) {
-                updatedComments.shift();
+            if (updatedComments.length === 0) {
+                setTableCompare(false);
             }
 
             return updatedComments;
@@ -104,6 +104,7 @@ function AttendeesDetail() {
 
     const handleClear = () => {
         setTableCompare(false);
+        setCheckedState([])
         setSelectedComments([]);
     }
 
@@ -155,6 +156,46 @@ function AttendeesDetail() {
         setTableCompare(false);
     };
 
+    const handleApproveComments = async () => {
+        try {
+            const commentsToApprove = selectedComments.filter(comment => !comment.isApproved);
+
+            if (commentsToApprove.length === 0) {
+                alert("No comments need approval.");
+                return;
+            }
+
+            await Promise.all(
+                commentsToApprove.map(comment =>
+                    axios.put(`http://localhost:5231/api/Contest/approveComment/${comment.idComment}`)
+                )
+            );
+
+            setSelectedComments(prevComments =>
+                prevComments.map(comment =>
+                    commentsToApprove.some(c => c.idComment === comment.idComment)
+                        ? { ...comment, isApproved: true }
+                        : comment
+                )
+            );
+
+            setAttendeesList(prevAttendeesList =>
+                prevAttendeesList.map(attendee =>
+                    commentsToApprove.some(c => c.idComment === attendee.idComment)
+                        ? { ...attendee, isApproved: true }
+                        : attendee
+                )
+            );
+
+            alert("Selected comments have been approved!");
+        } catch (error) {
+            console.error("Error approving comments:", error);
+            alert("Failed to approve comments. Please try again.");
+        }
+    };
+
+
+
     return (
         <div className="attendees-modal-overlay">
             <div className="attendees-modal">
@@ -187,7 +228,7 @@ function AttendeesDetail() {
                         {attendeesList.length > 0 ? (
                             attendeesList.map((attendee, index) => (
                                 <tr key={index}>
-                                    <td style={{ textAlign: "center" }} onClick={() => addCommentsToCompare(attendee)}>
+                                    <td style={{ textAlign: "center" }} onClick={() => addCommentsToCompare(index)}>
                                         {checkedState[index] ? <FaCheck /> : <div></div>}
                                     </td>
                                     <td>{attendee.account.name}</td>
@@ -225,6 +266,9 @@ function AttendeesDetail() {
                     </button>
                     <button className="compare-button" onClick={handleSaveChanges}>
                         Save Changes
+                    </button>
+                    <button className="compare-button" onClick={handleApproveComments}>
+                        Approve
                     </button>
                 </div>
                 <br /><br /><br />
