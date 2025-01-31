@@ -111,7 +111,7 @@ function PasswordManagement() {
                             onChange={(e) => setCurrentPassword(e.target.value)}
                         />
                         <span className="toggle-password"
-                            style={{ position: 'absolute', top: '31%', right: '170px', transform: 'translateY(-50%)' }}
+                            style={{ position: 'absolute', top: '27%', right: '170px', transform: 'translateY(-50%)' }}
                             onClick={() => togglePasswordVisibility("current")}>
                             {showPassword.current ? <EyeOff /> : <Eye />}
                         </span>
@@ -133,7 +133,7 @@ function PasswordManagement() {
                             onChange={(e) => setNewPassword(e.target.value)}
                         />
                         <span className="toggle-password"
-                            style={{ position: 'absolute', top: '42.5%', right: '170px', transform: 'translateY(-50%)' }}
+                            style={{ position: 'absolute', top: '38.5%', right: '170px', transform: 'translateY(-50%)' }}
                             onClick={() => togglePasswordVisibility("new")}>
                             {showPassword.new ? <EyeOff /> : <Eye />}
                         </span>
@@ -154,7 +154,7 @@ function PasswordManagement() {
                             onChange={(e) => setConfirmNewPassword(e.target.value)}
                         />
                         <span className="toggle-password"
-                            style={{ position: 'absolute', top: '54%', right: '170px', transform: 'translateY(-50%)' }}
+                            style={{ position: 'absolute', top: '50%', right: '170px', transform: 'translateY(-50%)' }}
                             onClick={() => togglePasswordVisibility("confirm")}>
                             {showPassword.confirm ? <EyeOff /> : <Eye />}
                         </span>

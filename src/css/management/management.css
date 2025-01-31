@@ -1,4 +1,3 @@
-/* Đảm bảo body và html chiếm toàn bộ chiều cao */
 html,
 body {
     margin: 0;
@@ -7,7 +6,6 @@ body {
     font-family: "Arial", sans-serif;
 }
 
-/* Thiết lập quản lý toàn màn hình */
 .manage-panel {
     margin: 0;
     display: flex;
@@ -23,7 +21,7 @@ body {
 .management-slide {
     width: 200px;
     height: 735px;
-    background-image: linear-gradient(to right, #ff7e5f, #faa05b);
+    background-image: linear-gradient(to top, #ff7e5f, #faa05b);
     display: flex;
     flex-direction: column;
     justify-content: start;
@@ -61,8 +59,7 @@ body {
 
 .management-function {
     width: 1310px;
-    height: 730px;
+    height: 735px;
     /* background-color: #fff; */
-    margin-top: 50px;
-    background: rgba(255, 255, 255, 1);
+    background: linear-gradient(to top, rgba(255, 126, 95, 0.5), #ffffff);
 }

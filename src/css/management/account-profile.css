@@ -16,7 +16,7 @@ body {
 }
 
 .profile-box {
-  background: white;
+  background: none;
   padding: 30px 40px;
   border-radius: 10px;
   text-align: center;
@@ -98,7 +98,7 @@ input {
 }
 
 .profile-button {
-  background-color: #e67e22;
+  background-color: #ff7700;
   color: #fff;
   padding: 10px 20px;
   border: none;

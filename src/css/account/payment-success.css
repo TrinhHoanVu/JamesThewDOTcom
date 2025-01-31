@@ -3,7 +3,7 @@
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background-color: #f4f9f4; /* Màu nền nhẹ nhàng */
+    background-color: #f4f9f4;
     font-family: "Arial", sans-serif;
     margin: 0;
 }
@@ -25,14 +25,14 @@
 }
 
 h1 {
-    color: #2e7d32; /* Xanh lá đậm */
+    color: #2e7d32;
     font-size: 26px;
     margin-bottom: 15px;
     font-weight: bold;
 }
 
 p {
-    color: #4f4f4f; /* Màu chữ xám */
+    color: #4f4f4f;
     font-size: 16px;
     margin-bottom: 25px;
     line-height: 1.5;
@@ -40,7 +40,7 @@ p {
 
 .confirmation-button {
     padding: 12px 25px;
-    background-color: #2e7d32; /* Màu xanh lá đậm */
+    background-color: #ff7700;
     color: white;
     border: none;
     border-radius: 8px;
@@ -51,6 +51,6 @@ p {
 }
 
 .confirmation-button:hover {
-    background-color: #276527; /* Màu xanh đậm hơn khi hover */
-    transform: scale(1.05); /* Hiệu ứng phóng to nhẹ khi hover */
+    background-color: #ff7700;
+    transform: scale(1.05);
 }
