@@ -100,3 +100,7 @@
 .contest-pagination-text {
     font-weight: bold;
 }
+
+.contest-card-readmore {
+    cursor: pointer;
+}

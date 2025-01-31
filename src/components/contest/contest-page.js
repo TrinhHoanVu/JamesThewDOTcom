@@ -21,7 +21,6 @@ const ContestPage = () => {
             });
             setContests(response.data.data.$values);
             setTotal(response.data.total);
-            console.log(response.data.total)
         } catch (error) {
             console.error("Error fetching contests:", error);
         }
@@ -49,23 +48,14 @@ const ContestPage = () => {
             <div className="contest-list">
                 {contests.length > 0 ? (
                     contests.map((contest) => (
-                        <div key={contest.idContest} className="contest-card">
-                            <h3 className="contest-card-title">{contest.title}</h3>
-                            <p className="contest-card-description">{contest.description}</p>
-                            <span className={`contest-status contest-status-${contest.status.toLowerCase()}`}>
-                                {contest.status}
-                            </span>
-                            <button className="contest-card-button" onClick={() => handleViewDetails(contest.idContest)}>
-                                View Details
-                            </button>
-                        </div>
+                        <ContestCard key={contest.idContest} contest={contest} onViewDetails={handleViewDetails} />
                     ))
                 ) : (
                     <p>No contests available.</p>
                 )}
             </div>
 
-            {total > 10 && (
+            {total > pageSize && (
                 <div className="contest-pagination">
                     <button className="contest-pagination-button" onClick={handlePreviousPage} disabled={pageNumber === 1}>
                         Previous
@@ -82,6 +72,34 @@ const ContestPage = () => {
                     </button>
                 </div>
             )}
+        </div>
+    );
+};
+
+const ContestCard = ({ contest, onViewDetails }) => {
+    const navigate = useNavigate();
+    const maxLength = 100;
+
+    const handleReadMore = () => {
+        navigate(`/contest/${contest.idContest}`);
+    };
+
+    return (
+        <div className="contest-card" onClick={() => handleReadMore()}>
+            <h3 className="contest-card-title">{contest.name}</h3>
+            <p className="contest-card-description">
+                {contest.description.length > maxLength
+                    ? `${contest.description.substring(0, maxLength)}...`
+                    : contest.description}
+                {contest.description.length > maxLength && (
+                    <span className="contest-card-readmore" onClick={handleReadMore}>
+                        More Detail
+                    </span>
+                )}
+            </p>
+            <span className={`contest-status contest-status-${contest.status.toLowerCase()}`}>
+                {contest.status}
+            </span>
         </div>
     );
 };

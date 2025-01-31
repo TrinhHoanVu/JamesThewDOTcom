@@ -17,10 +17,10 @@
 }
 
 .contestdt-image {
-    width: 100vw; 
-    height: auto;  
-    object-fit: cover; 
-    border-radius: 0; 
+    width: 100vw;
+    height: auto;
+    object-fit: cover;
+    border-radius: 0;
     margin-bottom: 20px;
 }
 
@@ -39,6 +39,7 @@
     line-height: 1.8;
     margin-left: 0;
     padding: 0 20px;
+    width: 1200px;
 }
 
 .contestdt-info {
@@ -144,4 +145,15 @@
 .contestdt-like-button:hover {
     color: #0056b3;
     text-decoration: underline;
+}
+
+.contestdt-price {
+    font-size: 24px;
+    font-weight: bold;
+    color: #e44d26;
+    margin-top: 10px;
+}
+
+.contest-card {
+    cursor: pointer;
 }

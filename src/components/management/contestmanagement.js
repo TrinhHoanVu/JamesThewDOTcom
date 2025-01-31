@@ -6,8 +6,8 @@ import $ from "jquery";
 import 'datatables.net-dt/css/dataTables.dataTables.css';
 import "datatables.net";
 import "../../css/management/contest-magenement.css";
+import { FaEdit, FaTrash } from "react-icons/fa";
 
-// Custom hook to throttle ResizeObserver
 function useThrottledResizeObserver(callback, delay = 200) {
     const resizeObserverRef = useRef(null);
     const throttledCallbackRef = useRef(null);
@@ -162,18 +162,18 @@ function ContestManagement() {
                                     <td className="actions">
                                         {contest.status.toUpperCase() !== "FINISHED" ? (
                                             <>
-                                                <button
-                                                    className="contest-action-button edit"
+                                                <FaEdit
+                                                    className="contest-action-icon edit-icon"
                                                     onClick={() => handleEdit(contest.idContest, contest.status)}
-                                                >
-                                                    Edit
-                                                </button>
-                                                <button
-                                                    className="contest-action-button delete"
+                                                    title="Edit"
+                                                    style={{ cursor: "pointer" }}
+                                                />
+                                                <FaTrash
+                                                    className="contest-action-icon delete-icon"
                                                     onClick={() => handleDelete(contest.idContest, contest.status)}
-                                                >
-                                                    Delete
-                                                </button>
+                                                    title="Delete"
+                                                    style={{ cursor: "pointer", marginLeft: "20px" }}
+                                                />
                                             </>
                                         ) : (
                                             <span className="no-action">Finished</span>
