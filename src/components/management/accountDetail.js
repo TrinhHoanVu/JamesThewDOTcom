@@ -3,12 +3,15 @@ import React, { useContext, useState, useEffect } from "react";
 import { DataContext } from "../../context/DatabaseContext";
 import { Country, State, City } from 'country-state-city';
 import "../../css/management/account-profile.css"
+import PaymentForm from "../account/payment-form";
 
 function AccountDetail() {
-    const { tokenInfor, setTokenInfor } = useContext(DataContext);
+    const { tokenInfor } = useContext(DataContext);
     const [name, setName] = useState("");
     const [address, setAddress] = useState("");
     const [phoneNumber, setPhoneNumber] = useState("");
+    const [expiredDay, setExpiredDay] = useState(null);
+    const [payment, setPayment] = useState(false);
     const isUser = tokenInfor?.role;
     const email = tokenInfor?.email;
     const [loggedUser, setLoggedUser] = useState([]);
@@ -37,6 +40,7 @@ function AccountDetail() {
             setName(respone.data.name);
             setAddress(respone.data.address);
             setPhoneNumber(respone.data.phoneNumber);
+            setExpiredDay(respone.data.expiredDay)
         } catch (err) {
             console.log(err)
         }
@@ -119,6 +123,23 @@ function AccountDetail() {
         } catch (err) {
             console.log(err)
         }
+    }
+
+    const formattedExpiredDay = expiredDay
+        ? new Date(expiredDay).toLocaleDateString("en-US", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric"
+        })
+        : "";
+
+    const handlePayment = () => {
+        setPayment(true)
+    }
+
+    const handleClosePaymentForm = () => {
+        setPayment(false)
     }
     return (
         <div className="profile-container">
@@ -228,7 +249,7 @@ function AccountDetail() {
                                 <button
                                     type="button"
                                     onClick={handleUpdateAddress}
-                                    className="updateAddress">
+                                    className="profile-button">
                                     Update Address
                                 </button>
                             </div>
@@ -236,20 +257,32 @@ function AccountDetail() {
                     </div>
                     {isUser === 'USER' && (<div className="form-group">
                         <label htmlFor="expiredDay">Expired Day</label>
-                        <input
+                        {expiredDay ? <input
                             type="text"
                             readOnly
                             id="expiredDay"
                             name="expiredDay"
-                            value={tokenInfor?.["http://schemas.microsoft.com/ws/2008/06/identity/claims/expired"]}
-                        />
+                            value={formattedExpiredDay}
+                        /> : <div> <br />
+                            Your account has not enabled yet. Click
+                            <span style={{ color: "orange", cursor: "pointer" }} onClick={() => handlePayment()} > here</span> to pay.
+                        </div>}
                     </div>)}
                     <button type="submit" className="profile-button">
                         Save Changes
                     </button>
                 </form>
-            </div>
-        </div>
+                {payment && (
+                    <div className="cmtForm-overlay">
+                        <div className="cmtForm-payment-box">
+                            <button className="cmtForm-close-button" onClick={handleClosePaymentForm}>✖</button>
+                            <h4 className="cmtForm-message">Your account is not active. Please subcribe to comment.</h4>
+                            <PaymentForm user={loggedUser} />
+                        </div>
+                    </div>
+                )}
+            </div >
+        </div >
     )
 }
 
