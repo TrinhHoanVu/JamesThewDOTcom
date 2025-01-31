@@ -46,10 +46,6 @@ const publicRouter = [
     {
         path: "/success",
         element: <PaymentConfirmation />
-    },
-    {
-        path: "/contest/:contestId/attendees",
-        element: <AttendeesDetail />
     }
 ]
 
@@ -62,7 +58,16 @@ const privateRouter = [
         status: true
     }
 ]
+
+const evaluateRouter = [
+    {
+        path: "/contest/:contestId/attendees",
+        element: <AttendeesDetail />,
+        roles: ["ADMIN", "SUPERADMIN"]
+    }
+]
 export {
     publicRouter,
-    privateRouter
+    privateRouter,
+    evaluateRouter
 }

@@ -182,7 +182,7 @@ const CommentForm = ({ contestId, contest }) => {
                                     cursor: "pointer",
                                     color: isLiked ? 'black' : 'gray',
                                 }}
-                                onClick={() => handleLike(comment.idComment)}
+                                onClick={contest.status !== "FINISHED" ? () => handleLike(comment.idComment) : null}
                             >
                                 <AiFillLike />
                             </span>
@@ -277,7 +277,7 @@ const CommentForm = ({ contestId, contest }) => {
                     <h5 style={{ cursor: "pointer" }} onClick={fetchLastestComments}>Lastest comments</h5>
                 </div>
             </div>
-            {contest.status !== "FINISHED" ? (
+            {(contest.status !== "FINISHED" && contest.status !== "NOT YET") ? (
                 !commented ? (
                     <div>
                         <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
@@ -323,7 +323,8 @@ const CommentForm = ({ contestId, contest }) => {
                 )
             ) : (
                 <div style={{ marginTop: "20px", fontSize: "16px", fontWeight: "bold", color: "red" }}>
-                    Comments are disabled as the contest has finished.
+                    {contest.status == "FINISHED" ? (<span>Comments are disabled as the contest has finished.</span>)
+                        : (<span>Comments are disabled as the contest has not already started.</span>)}
                 </div>
             )}
 

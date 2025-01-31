@@ -55,8 +55,15 @@ function ContestDetail() {
                         <h1 className="contestdt-title">{contest.name}</h1>
                         <div className="contestdt-info">
                             <p className="contestdt-description">{renderDescription(description)}</p>
+                            <p className='contestdt-price'>
+                                <span style={{ fontSize: "40px" }}>
+                                    Price: ${contest.price} {contest.winner && (<span> - Winner: {contest.winner.name}</span>)}
+                                    <br />
+                                    <strong style={{ fontSize: "30px" }}>
+                                        From: {formatDate(contest.startDate)} To {formatDate(contest.endDate)}
+                                    </strong>
+                                </span></p>
                             <p className="contestdt-duration">
-                                <strong style={{ fontSize: "30px" }}>From: {formatDate(contest.startDate)} To {formatDate(contest.endDate)}</strong>
                             </p>
                         </div>
                     </div>
