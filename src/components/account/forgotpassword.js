@@ -22,7 +22,6 @@ const ForgotPassword = () => {
                     withCredentials: true,
                 }
             );
-            console.log("Sending email:", email);
             navigate("/confirmcode", { state: { linkNavigate: "/resetpassword" } })
         } catch (error) {
             const errorMessage = error.response?.data?.message || "An error occurred. Please try again.";
@@ -43,14 +42,14 @@ const ForgotPassword = () => {
                             placeholder="Enter your email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            required
                         />
                     </div>
+                    {message && <p className="message">{message}</p>}
+
                     <button type="submit" className="submit-button">
                         Submit
                     </button>
                     {/* Conditionally render the message */}
-                    {message && <p className="message">{message}</p>}
                 </form>
             </div>
         </div>

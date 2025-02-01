@@ -82,31 +82,33 @@ const ContestPage = () => {
 };
 
 const ContestCard = ({ contest, onViewDetails }) => {
-    const navigate = useNavigate();
-    const maxLength = 100;
+    try {
+        const navigate = useNavigate();
+        const maxLength = 100;
 
-    const handleReadMore = () => {
-        navigate(`/contest/${contest.idContest}`);
-    };
+        const handleReadMore = () => {
+            navigate(`/contest/${contest.idContest}`);
+        };
 
-    return (
-        <div className="contest-card" onClick={() => handleReadMore()}>
-            <h3 className="contest-card-title">{contest.name}</h3>
-            <p className="contest-card-description">
-                {contest.description.length > maxLength
-                    ? `${contest.description.substring(0, maxLength)}...`
-                    : contest.description}
-                {contest.description.length > maxLength && (
-                    <span className="contest-card-readmore" onClick={handleReadMore}>
-                        More Detail
-                    </span>
-                )}
-            </p>
-            <span className={`contest-status contest-status-${contest.status.toLowerCase()}`}>
-                {contest.status}
-            </span>
-        </div>
-    );
+        return (
+            <div className="contest-card" onClick={() => handleReadMore()}>
+                <h3 className="contest-card-title">{contest.name}</h3>
+                <p className="contest-card-description">
+                    {contest.description.length > maxLength
+                        ? `${contest.description.substring(0, maxLength)}...`
+                        : contest.description}
+                    {contest.description.length > maxLength && (
+                        <span className="contest-card-readmore" onClick={handleReadMore}>
+                            More Detail
+                        </span>
+                    )}
+                </p>
+                <span className={`contest-status contest-status-${contest.status.toLowerCase()}`}>
+                    {contest.status}
+                </span>
+            </div>
+        );
+    } catch (err) { console.log(err) }
 };
 
 export default ContestPage;

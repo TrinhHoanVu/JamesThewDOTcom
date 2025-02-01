@@ -12,7 +12,6 @@ const VerifyCode = () => {
 
     const handleVerifyCode = async (e) => {
         e.preventDefault();
-        console.log(linkNavigate)
         try {
             await axios.post(
                 "http://localhost:5231/api/Account/VerifyCode",

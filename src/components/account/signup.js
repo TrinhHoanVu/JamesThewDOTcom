@@ -19,26 +19,30 @@ const SignUp = () => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         const passwordRegex = /^[a-zA-Z0-9]{8,16}$/;
 
-        if (!name.trim()) {
-            errors.name = "Name cannot be empty.";
-        }
-        if (!emailRegex.test(email)) {
-            errors.email = "Invalid email format.";
-        }
-        if (!passwordRegex.test(password)) {
-            errors.password =
-                "Password must be 8-16 characters and contain only letters and numbers.";
-        }
-        if (cfPassword !== password) {
-            errors.cfPassword = "Passwords do not match.";
-        }
-        if (!paymentOption) {
-            errors.paymentOption = "Please select a payment option.";
+        try {
+            if (!name.trim()) {
+                errors.name = "Name cannot be empty.";
+            }
+            if (!emailRegex.test(email)) {
+                errors.email = "Invalid email format.";
+            }
+            if (!passwordRegex.test(password)) {
+                errors.password =
+                    "Password must be 8-16 characters and contain only letters and numbers.";
+            }
+            if (cfPassword !== password) {
+                errors.cfPassword = "Passwords do not match.";
+            }
+            if (!paymentOption) {
+                errors.paymentOption = "Please select a payment option.";
+            }
+        } catch (err) {
+            console.log(err)
         }
         return errors;
     };
 
-   
+
 
     const handleSignUp = async (e) => {
         e.preventDefault();

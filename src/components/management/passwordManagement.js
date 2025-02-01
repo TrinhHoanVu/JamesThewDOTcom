@@ -36,32 +36,32 @@ function PasswordManagement() {
 
     const handleUpdatePassword = async (e) => {
         e.preventDefault();
-
-        let validationErrors = {};
-
-        if (!currentPassword) {
-            validationErrors.currentPassword = "Current password is required.";
-        }
-        if (currentPassword !== loggedUser.password) {
-            validationErrors.currentPassword = "Current password is invalid.";
-        }
-        if (newPassword === loggedUser.password) {
-            validationErrors.newPassword = "New password must be different from the current password.";
-        }
-        if (!newPassword) {
-            validationErrors.newPassword = "New password is required.";
-        } else if (newPassword.length < 8 || newPassword.length > 20 || /[^a-zA-Z0-9]/.test(newPassword)) {
-            validationErrors.newPassword = "Password must be 8-20 characters long with no special characters.";
-        }
-        if (newPassword !== confirmNewPassword) {
-            validationErrors.confirmPassword = "Passwords do not match.";
-        }
-
-        setErrors(validationErrors);
-
-        if (Object.keys(validationErrors).length > 0) return;
-
         try {
+            let validationErrors = {};
+
+            if (!currentPassword) {
+                validationErrors.currentPassword = "Current password is required.";
+            }
+            if (currentPassword !== loggedUser.password) {
+                validationErrors.currentPassword = "Current password is invalid.";
+            }
+            if (newPassword === loggedUser.password) {
+                validationErrors.newPassword = "New password must be different from the current password.";
+            }
+            if (!newPassword) {
+                validationErrors.newPassword = "New password is required.";
+            } else if (newPassword.length < 8 || newPassword.length > 20 || /[^a-zA-Z0-9]/.test(newPassword)) {
+                validationErrors.newPassword = "Password must be 8-20 characters long with no special characters.";
+            }
+            if (newPassword !== confirmNewPassword) {
+                validationErrors.confirmPassword = "Passwords do not match.";
+            }
+
+            setErrors(validationErrors);
+
+            if (Object.keys(validationErrors).length > 0) return;
+
+
             await axios.put(`http://localhost:5231/api/Account/ChangePasswordWithoutCode`, {
                 email: tokenInfor.email,
                 currentPassword,
@@ -82,14 +82,18 @@ function PasswordManagement() {
     };
 
     const handleClear = () => {
-        setCurrentPassword("");
-        setNewPassword("");
-        setConfirmNewPassword("");
-        setErrors({
-            currentPassword: "",
-            newPassword: "",
-            confirmPassword: ""
-        });
+        try {
+            setCurrentPassword("");
+            setNewPassword("");
+            setConfirmNewPassword("");
+            setErrors({
+                currentPassword: "",
+                newPassword: "",
+                confirmPassword: ""
+            });
+        } catch (err) {
+            console.log(err)
+        }
     }
 
     return (

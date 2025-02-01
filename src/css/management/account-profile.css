@@ -84,8 +84,7 @@ input:hover,
 .custom-row input {
   flex: none;
   width: 50%;
-  min-width: 150px;
-  max-width: 150px;
+  width: 250px;
 }
 
 input {
@@ -121,9 +120,6 @@ input {
 
 .custom-row .form-select {
   flex: none;
-  width: 50%;
-  min-width: 150px;
-  max-width: 150px;
   padding: 8px 10px;
   border: 1px solid #ccc;
   border-radius: 5px;

@@ -47,8 +47,6 @@ const CommentForm = ({ contestId, contest }) => {
         } catch (error) {
             console.log(error)
         }
-
-
     }
 
     const fetchUserCommented = async () => {
@@ -63,7 +61,6 @@ const CommentForm = ({ contestId, contest }) => {
             if (response.data.commented) {
                 fetchUserComment();
             }
-
         } catch (error) {
             console.error('Error fetching comments:', error);
         }
@@ -86,8 +83,8 @@ const CommentForm = ({ contestId, contest }) => {
     };
 
     const fetchLastestComments = async () => {
-        setIsFetchingLastestComments(true);
         try {
+            setIsFetchingLastestComments(true);
             const response = await axios.get(`http://localhost:5231/api/Contest/getLastestComments`, {
                 params: { contestId: contestId }
             });
@@ -151,46 +148,50 @@ const CommentForm = ({ contestId, contest }) => {
     };
 
     const renderComments = (commentList) => {
-        return commentList
-            .filter(comment => comment.account.idAccount !== userLogged.idAccount)
-            .map(comment => {
-                const formattedDate = new Date(comment.postedDate).toLocaleDateString("en-US", {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
-                });
+        try {
+            return commentList
+                .filter(comment => comment.account.idAccount !== userLogged.idAccount)
+                .map(comment => {
+                    const formattedDate = new Date(comment.postedDate).toLocaleDateString("en-US", {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    });
 
-                const isLiked = likedComments.some(liked => liked.idComment === comment.idComment);
+                    const isLiked = likedComments.some(liked => liked.idComment === comment.idComment);
 
-                return (
-                    <div key={comment.idComment} className="cmtForm-box" style={{ marginTop: "20px", width: "1000px" }}>
-                        <span className="cmtForm-content">
-                            <strong style={{ fontSize: "13px", paddingBottom: "10px" }}>
-                                @{comment.account.name}
-                                <span style={{ fontSize: "12px", color: "gray", marginLeft: "10px" }}>
-                                    {formattedDate}
-                                </span>
-                            </strong>
-                            <br />
-                            <span style={{ paddingTop: "13px" }}>{comment.content}</span>
-                        </span>
-                        <br />
-                        <div style={{ paddingTop: "7px" }}>
-                            <span
-                                style={{
-                                    fontSize: "20px",
-                                    cursor: "pointer",
-                                    color: isLiked ? 'black' : 'gray',
-                                }}
-                                onClick={contest.status !== "FINISHED" ? () => handleLike(comment.idComment) : null}
-                            >
-                                <AiFillLike />
+                    return (
+                        <div key={comment.idComment} className="cmtForm-box" style={{ marginTop: "20px", width: "1000px" }}>
+                            <span className="cmtForm-content">
+                                <strong style={{ fontSize: "13px", paddingBottom: "10px" }}>
+                                    @{comment.account.name}
+                                    <span style={{ fontSize: "12px", color: "gray", marginLeft: "10px" }}>
+                                        {formattedDate}
+                                    </span>
+                                </strong>
+                                <br />
+                                <span style={{ paddingTop: "13px" }}>{comment.content}</span>
                             </span>
-                            <span style={{ fontSize: "13px", paddingBottom: "5px" }}> {comment.likes}</span>
+                            <br />
+                            <div style={{ paddingTop: "7px" }}>
+                                <span
+                                    style={{
+                                        fontSize: "20px",
+                                        cursor: "pointer",
+                                        color: isLiked ? 'black' : 'gray',
+                                    }}
+                                    onClick={contest.status !== "FINISHED" ? () => handleLike(comment.idComment) : null}
+                                >
+                                    <AiFillLike />
+                                </span>
+                                <span style={{ fontSize: "13px", paddingBottom: "5px" }}> {comment.likes}</span>
+                            </div>
                         </div>
-                    </div>
-                );
-            });
+                    );
+                });
+        } catch (err) {
+            console.log(err)
+        }
     };
 
     const fetchUserComment = async () => {
@@ -207,15 +208,19 @@ const CommentForm = ({ contestId, contest }) => {
     }
 
     const handleCommentClick = () => {
-        if (!roleUser) {
-            alert('Please log in to comment.');
-            navigate("/login", { state: { from: window.location.pathname } });
-        }
+        try {
+            if (!roleUser) {
+                alert('Please log in to comment.');
+                navigate("/login", { state: { from: window.location.pathname } });
+            }
 
-        if (!statusUser) {
-            setShowPaymentForm(true);
-        } else {
-            setShowPaymentForm(false);
+            if (!statusUser) {
+                setShowPaymentForm(true);
+            } else {
+                setShowPaymentForm(false);
+            }
+        } catch (err) {
+            console.log(err)
         }
     };
 
@@ -238,18 +243,22 @@ const CommentForm = ({ contestId, contest }) => {
     }
 
     const handleEditComment = () => {
-        if (buttonComment === "Edit comment") {
-            setIsNewComment(true);
-            setButtonComment("Save comment");
+        try {
+            if (buttonComment === "Edit comment") {
+                setIsNewComment(true);
+                setButtonComment("Save comment");
 
-            if (editedComment.trim() === "") {
-                setEditedComment(loggedAccountComment.content);
+                if (editedComment.trim() === "") {
+                    setEditedComment(loggedAccountComment.content);
+                }
+
             }
-
-        }
-        else {
-            setIsNewComment(false);
-            setButtonComment("Edit comment");
+            else {
+                setIsNewComment(false);
+                setButtonComment("Edit comment");
+            }
+        } catch (error) {
+            console.log(error)
         }
     }
 
