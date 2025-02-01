@@ -12,14 +12,13 @@ const ResetPassword = () => {
     const handleResetPassword = async (e) => {
         e.preventDefault();
 
-        // Check if passwords match
         if (newPassword !== confirmPassword) {
             setMessage("Passwords do not match.");
             return;
         }
 
         try {
-            const response = await axios.put(
+            await axios.put(
                 "http://localhost:5231/api/Account/ChangePassword",
                 {
                     NewPass: newPassword,

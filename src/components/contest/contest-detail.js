@@ -36,14 +36,16 @@ function ContestDetail() {
     };
 
     const renderDescription = (description) => {
-        if (typeof description === 'string') {
-            return description.toString().split("\\n").map((item, key) =>
-                <span key={key}>{item}<br /></span>
-            );
-        } else {
-            console.error("Invalid description type.");
-            return "";
-        }
+        try {
+            if (typeof description === 'string') {
+                return description.toString().split("\\n").map((item, key) =>
+                    <span key={key}>{item}<br /></span>
+                );
+            } else {
+                console.error("Invalid description type.");
+                return "";
+            }
+        } catch (err) { console.log(err) }
     };
 
     return (

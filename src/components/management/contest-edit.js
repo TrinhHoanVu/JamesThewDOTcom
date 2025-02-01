@@ -50,64 +50,71 @@ function ContestEditForm({ idContest, onClose, reloadContests }) {
     };
 
     const handleStartDateChange = (value) => {
-        setStartDate(value);
+        try {
+            setStartDate(value);
 
-        const dateErrors = validateDate(value, endDate);
-        setErrors((prevErrors) => ({
-            ...prevErrors,
-            startDate: dateErrors.startDate || null,
-        }));
+            const dateErrors = validateDate(value, endDate);
+            setErrors((prevErrors) => ({
+                ...prevErrors,
+                startDate: dateErrors.startDate || null,
+            }));
+        } catch (err) { console.log(err) }
     };
 
     const handleEndDateChange = (value) => {
-        setEndDate(value);
+        try {
+            setEndDate(value);
 
-        const dateErrors = validateDate(startDate, value);
-        setErrors((prevErrors) => ({
-            ...prevErrors,
-            endDate: dateErrors.endDate || null,
-        }));
+            const dateErrors = validateDate(startDate, value);
+            setErrors((prevErrors) => ({
+                ...prevErrors,
+                endDate: dateErrors.endDate || null,
+            }));
+        } catch (err) { console.log(err) }
     };
 
     const validateDate = (startDate, endDate) => {
-        const errors = {};
-        const now = new Date().getTime();
-        const start = new Date(startDate).getTime();
-        const end = new Date(endDate).getTime();
+        try {
+            const errors = {};
+            const now = new Date().getTime();
+            const start = new Date(startDate).getTime();
+            const end = new Date(endDate).getTime();
 
-        if (!startDate) errors.startDate = "Start date is required.";
-        else if (!isNaN(start) && start < now) {
-            errors.startDate = "Start date must be in the future.";
-        }
+            if (!startDate) errors.startDate = "Start date is required.";
+            else if (!isNaN(start) && start < now) {
+                errors.startDate = "Start date must be in the future.";
+            }
 
-        if (!endDate) errors.endDate = "End date is required.";
-        else if (!isNaN(end) && end < now) {
-            errors.endDate = "End date must be in the future.";
-        }
+            if (!endDate) errors.endDate = "End date is required.";
+            else if (!isNaN(end) && end < now) {
+                errors.endDate = "End date must be in the future.";
+            }
 
-        if (!isNaN(start) && !isNaN(end) && start >= end) {
-            errors.endDate = "End date must be after the start date.";
-        }
+            if (!isNaN(start) && !isNaN(end) && start >= end) {
+                errors.endDate = "End date must be after the start date.";
+            }
 
-        return errors;
+            return errors;
+        } catch (err) { console.log(err) }
     };
 
     const validate = () => {
         const errors = {};
-        if (!name.trim()) errors.name = "Name is required.";
-        if (!description.getCurrentContent().hasText()) errors.description = "Description is required.";
-        if (price < 0) errors.price = "Price must be greater than or equal to 0.";
-        if (!startDate) errors.startDate = "Start date is required.";
-        if (!endDate) errors.endDate = "End date is required.";
+        try {
+            if (!name.trim()) errors.name = "Name is required.";
+            if (!description.getCurrentContent().hasText()) errors.description = "Description is required.";
+            if (price < 0) errors.price = "Price must be greater than or equal to 0.";
+            if (!startDate) errors.startDate = "Start date is required.";
+            if (!endDate) errors.endDate = "End date is required.";
 
-        const start = new Date(startDate).getTime();
-        const end = new Date(endDate).getTime();
-        const now = Date.now();
-        console.log(start + " " + now)
+            const start = new Date(startDate).getTime();
+            const end = new Date(endDate).getTime();
+            const now = Date.now();
 
-        if (start < now) errors.startDate = "Start date must be in the future.";
-        if (end < now) errors.endDate = "End date must be in the future.";
-        if (start >= end) errors.endDate = "End date must be after the start date.";
+            if (start < now) errors.startDate = "Start date must be in the future.";
+            if (end < now) errors.endDate = "End date must be in the future.";
+            if (start >= end) errors.endDate = "End date must be after the start date.";
+        } catch (err) { console.log(err) }
         return errors;
     };
 
@@ -121,12 +128,6 @@ function ContestEditForm({ idContest, onClose, reloadContests }) {
         try {
 
             const descriptionText = description.getCurrentContent().getPlainText();
-
-            // if (status === 'HAPPENING') {
-            //     await axios.post("http://localhost:5231/api/Contest/sendNewContest", {
-            //         name, descriptionText, startDate, endDate, status
-            //     })
-            // }
 
             await axios.put(`http://localhost:5231/api/Contest/update/${idContest}`, {
                 name,

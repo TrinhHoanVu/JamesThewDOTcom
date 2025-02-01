@@ -11,12 +11,10 @@ function PaymentForm({ user }) {
     }
 
     const createPayment = async () => {
-        setLoading(true);
-        console.log(user.email)
-
-        localStorage.setItem("previousPage", window.location.pathname + window.location.search);
-
         try {
+            setLoading(true);
+            localStorage.setItem("previousPage", window.location.pathname + window.location.search);
+
             const response = await axios.post("http://localhost:5231/api/SubscriptionPayment/create-payment", {
                 Amount: calculateAmountPayment(),
                 Username: user.name,

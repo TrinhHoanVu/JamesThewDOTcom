@@ -92,27 +92,35 @@ function ContestManagement() {
     }, [contests]);
 
     const handleEdit = (contestId, status) => {
-        if (status.toUpperCase() === "NOT YET") {
-            setIdContest(contestId);
-            setContestEdit(true);
-        } else {
-            alert("This contest has already begun");
+        try {
+            if (status.toUpperCase() === "NOT YET") {
+                setIdContest(contestId);
+                setContestEdit(true);
+            } else {
+                alert("This contest has already begun");
+            }
+        } catch (err) {
+            console.log(err)
         }
     };
 
     const handleDelete = async (contestId, status) => {
-        if (status.toUpperCase() === "NOT YET") {
-            if (window.confirm("Are you sure you want to delete this contest?")) {
-                try {
-                    await axios.delete(`http://localhost:5231/api/Contest/delete/${contestId}`);
-                    alert("Contest deleted successfully!");
-                    fetchContests();
-                } catch (err) {
-                    alert("Failed to delete contest. Please try again.");
+        try {
+            if (status.toUpperCase() === "NOT YET") {
+                if (window.confirm("Are you sure you want to delete this contest?")) {
+                    try {
+                        await axios.delete(`http://localhost:5231/api/Contest/delete/${contestId}`);
+                        alert("Contest deleted successfully!");
+                        fetchContests();
+                    } catch (err) {
+                        alert("Failed to delete contest. Please try again.");
+                    }
                 }
+            } else {
+                alert("This contest has already begun");
             }
-        } else {
-            alert("This contest has already begun");
+        } catch (err) {
+            console.log(err)
         }
     };
 

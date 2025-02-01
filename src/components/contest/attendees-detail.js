@@ -84,18 +84,23 @@ function AttendeesDetail() {
         });
 
         setSelectedComments((prevSelectedComments) => {
-            const isCommentSelected = prevSelectedComments.some(comment => comment.content === attendeesList[index].content);
-
             let updatedComments;
-            if (isCommentSelected) {
-                updatedComments = prevSelectedComments.filter(comment => comment.content !== attendeesList[index].content);
-            } else {
-                updatedComments = [...prevSelectedComments, attendeesList[index]];
-                if (updatedComments.length > 3) updatedComments = updatedComments.slice(1);
-            }
 
-            if (updatedComments.length === 0) {
-                setTableCompare(false);
+            try {
+                const isCommentSelected = prevSelectedComments.some(comment => comment.content === attendeesList[index].content);
+
+                if (isCommentSelected) {
+                    updatedComments = prevSelectedComments.filter(comment => comment.content !== attendeesList[index].content);
+                } else {
+                    updatedComments = [...prevSelectedComments, attendeesList[index]];
+                    if (updatedComments.length > 3) updatedComments = updatedComments.slice(1);
+                }
+
+                if (updatedComments.length === 0) {
+                    setTableCompare(false);
+                }
+            } catch (err) {
+                console.log(err)
             }
 
             return updatedComments;
@@ -109,18 +114,21 @@ function AttendeesDetail() {
     }
 
     const handleCompare = () => {
-        console.log("Selected comments:", selectedComments);
-        if (selectedComments.length > 1) {
-            setTableCompare(true);
+        try {
+            if (selectedComments.length > 1) {
+                setTableCompare(true);
 
-            setTimeout(() => {
-                compareTableRef.current?.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start",
-                });
-            }, 0);
-        } else {
-            alert("Please select more than two comments to compare.");
+                setTimeout(() => {
+                    compareTableRef.current?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start",
+                    });
+                }, 0);
+            } else {
+                alert("Please select more than two comments to compare.");
+            }
+        } catch (err) {
+            console.log(err)
         }
     };
 
@@ -142,18 +150,22 @@ function AttendeesDetail() {
     }
 
     const handleSaveMark = () => {
-        setAttendeesList((prevAttendeesList) =>
-            prevAttendeesList.map((attendee) => {
-                const selectedComment = selectedComments.find((comment) => comment.content === attendee.content);
-                if (selectedComment) {
-                    return { ...attendee, mark: selectedComment.mark };
-                }
-                return attendee;
-            })
-        );
-        alert("Marks have been updated successfully!");
-        setSelectedComments([]);
-        setTableCompare(false);
+        try {
+            setAttendeesList((prevAttendeesList) =>
+                prevAttendeesList.map((attendee) => {
+                    const selectedComment = selectedComments.find((comment) => comment.content === attendee.content);
+                    if (selectedComment) {
+                        return { ...attendee, mark: selectedComment.mark };
+                    }
+                    return attendee;
+                })
+            );
+            alert("Marks have been updated successfully!");
+            setSelectedComments([]);
+            setTableCompare(false);
+        } catch (error) {
+            console.log(error)
+        }
     };
 
     const handleApproveComments = async () => {

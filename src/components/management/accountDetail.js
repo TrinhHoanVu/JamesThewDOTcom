@@ -4,6 +4,7 @@ import { DataContext } from "../../context/DatabaseContext";
 import { Country, State, City } from 'country-state-city';
 import "../../css/management/account-profile.css"
 import PaymentForm from "../account/payment-form";
+import { error } from "jquery";
 
 function AccountDetail() {
     const { tokenInfor } = useContext(DataContext);
@@ -29,6 +30,10 @@ function AccountDetail() {
 
     const [showSelectBoxes, setShowSelectBoxes] = useState(false);
 
+    const [initialName, setInitialName] = useState("");
+    const [initialAddress, setInitialAddress] = useState("");
+    const [initialPhoneNumber, setInitialPhoneNumber] = useState("");
+
     useEffect(() => {
         fetchAccountData();
     }, [])
@@ -41,52 +46,74 @@ function AccountDetail() {
             setAddress(respone.data.address);
             setPhoneNumber(respone.data.phoneNumber);
             setExpiredDay(respone.data.expiredDay)
+
+            setInitialName(respone.data.name);
+            setInitialAddress(respone.data.address);
+            setInitialPhoneNumber(respone.data.phoneNumber);
         } catch (err) {
             console.log(err)
         }
     }
 
     const handleCountryChange = (country) => {
-        if (!country) return;
+        try {
+            if (!country) return;
 
-        setSelectedCountry(country);
+            setSelectedCountry(country);
 
-        const statesOfCountry = State.getStatesOfCountry(country.isoCode);
-        setStates(statesOfCountry);
+            const statesOfCountry = State.getStatesOfCountry(country.isoCode);
+            setStates(statesOfCountry);
 
-        setSelectedState(null);
-        setCities([]);
+            setSelectedState(null);
+            setCities([]);
 
-        if (statesOfCountry.length > 0) {
-            const firstState = statesOfCountry[0];
-            setSelectedState(firstState);
+            if (statesOfCountry.length > 0) {
+                const firstState = statesOfCountry[0];
+                setSelectedState(firstState);
 
+                const citiesOfState = City.getCitiesOfState(country.isoCode, firstState.isoCode);
+                setCities(citiesOfState);
 
-            const citiesOfState = City.getCitiesOfState(country.isoCode, firstState.isoCode);
+                if (citiesOfState.length > 0) {
+                    setInitialLoadCity(false);
+                    setSelectedCity(citiesOfState[0]);
+
+                    setAddress(`${citiesOfState[0].name}, ${firstState.name}, ${country.name}`);
+                } else {
+                    setInitialLoadCity(true);
+                    setAddress(`${firstState.name}, ${country.name}`);
+                }
+            } else {
+                setAddress(country.name);
+            }
+
+            setInitialLoadState(false);
+        } catch (error) {
+            console.log(error)
+        }
+    };
+
+    const handleStateChange = (state) => {
+        try {
+            if (!state || !selectedCountry) return;
+
+            setSelectedState(state);
+
+            const citiesOfState = City.getCitiesOfState(selectedCountry.isoCode, state.isoCode);
             setCities(citiesOfState);
 
             if (citiesOfState.length > 0) {
                 setInitialLoadCity(false);
-                setSelectedCity(citiesOfState[0])
+                setSelectedCity(citiesOfState[0]);
+
+                setAddress(`${citiesOfState[0].name}, ${state.name}, ${selectedCountry.name}`);
+            } else {
+                setInitialLoadCity(true);
+                setSelectedCity(null);
+                setAddress(`${state.name}, ${selectedCountry.name}`);
             }
-        }
-
-        setInitialLoadState(false);
-    };
-
-    const handleStateChange = (state) => {
-        if (!state) return;
-
-        setSelectedState(state);
-
-        const citiesOfState = City.getCitiesOfState(selectedCountry.isoCode, state.isoCode);
-        setCities(citiesOfState);
-
-        if (citiesOfState.length > 0) {
-            setInitialLoadCity(false);
-            setSelectedCity(citiesOfState[0])
-        } else {
-            setInitialLoadCity(true);
+        } catch (err) {
+            console.log(err)
         }
     };
 
@@ -95,24 +122,42 @@ function AccountDetail() {
     }
 
     const handleUpdateAddress = () => {
-        setShowSelectBoxes(false)
+        try {
+            setShowSelectBoxes(false)
 
-        if (selectedCity == null) {
-            return
-        }
+            if (selectedCity == null) {
+                return
+            }
 
-        if (selectedCity == null) {
-            setAddress(selectedCity.name + ", " + selectedState.name)
-        } else {
-            setAddress(selectedCity.name + ", " + selectedState.name + ", " + selectedCity.name)
+            if (selectedCity == null) {
+                setAddress(selectedCity.name + ", " + selectedState.name)
+            } else {
+                setAddress(selectedCity.name + ", " + selectedState.name + ", " + selectedCity.name)
+            }
+            setShowSelectBoxes(false)
+        } catch (error) {
+            console.log(error)
         }
-        setShowSelectBoxes(false)
+    }
+
+    const handleClearAddress = () => {
+        setAddress("")
     }
 
     async function handleUpdateProfile(e) {
         e.preventDefault();
 
         try {
+            if (name === initialName && address === initialAddress && phoneNumber === initialPhoneNumber) {
+                alert("No changes detected.");
+                return;
+            }
+        } catch (err) {
+            console.log(err)
+        }
+
+        try {
+
             await axios.put("http://localhost:5231/api/Account/updateProfile", { email, name, address, phoneNumber })
                 .then(res => {
                     if (res.status === 200) {
@@ -193,7 +238,7 @@ function AccountDetail() {
                             value={address}
                             placeholder="Enter your address"
                             onClick={handleChangeAddress}
-                            onChange={(e) => { }}
+                            onChange={handleUpdateAddress}
                         />
 
                         {showSelectBoxes && (<div className="container">
@@ -236,10 +281,14 @@ function AccountDetail() {
                                     onChange={(e) => {
                                         const city = cities.find((c) => c.name === e.target.value);
                                         setSelectedCity(city);
+
+                                        if (city) {
+                                            setAddress(`${city.name}, ${selectedState.name}, ${selectedCountry.name}`);
+                                        } else {
+                                            setAddress(`${selectedState.name}, ${selectedCountry.name}`);
+                                        }
                                     }}>
-
                                     {initialLoadCity && <option value="">Select City</option>}
-
                                     {cities.map((city) => (
                                         <option key={city.name} value={city.name}>
                                             {city.name}
@@ -248,9 +297,9 @@ function AccountDetail() {
                                 </select>
                                 <button
                                     type="button"
-                                    onClick={handleUpdateAddress}
+                                    onClick={handleClearAddress}
                                     className="profile-button">
-                                    Update Address
+                                    Clear
                                 </button>
                             </div>
                         </div>)}

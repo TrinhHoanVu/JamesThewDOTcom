@@ -16,34 +16,37 @@ const Login = () => {
 
   async function handleLogin(e) {
     e.preventDefault();
-    await axios.post("http://localhost:5231/api/Account/login", { email, password })
-      .then(res => {
-        if (res.status === 200) {
-          console.log("res: ", res);
+    try {
+      await axios.post("http://localhost:5231/api/Account/login", { email, password })
+        .then(res => {
+          if (res.status === 200) {
+            console.log("res: ", res);
 
-          localStorage.setItem("inforToken", JSON.stringify(res.data));
-          let tokenDecode = jwtDecode(res.data.token);
-          console.log("tokenDecode: ", tokenDecode);
-          setTokenInfor(tokenDecode)
-          const allowedRoles = ["SUPERADMIN", "ADMIN"];
-
-          if (allowedRoles.includes(tokenDecode.role)) {
-            if (from === "/") {
-              navigate("/management", { state: { isProfile: true, isContest: false, isRecipe: false, isTip: false } });
+            localStorage.setItem("inforToken", JSON.stringify(res.data));
+            let tokenDecode = jwtDecode(res.data.token);
+            console.log("tokenDecode: ", tokenDecode);
+            setTokenInfor(tokenDecode)
+            const allowedRoles = ["SUPERADMIN", "ADMIN"];
+            
+            if (allowedRoles.includes(tokenDecode.role)) {
+              if (from === "/") {
+                navigate("/management", { state: { isProfile: true, isContest: false, isRecipe: false, isTip: false } });
+              } else {
+                navigate(from)
+              }
             } else {
               navigate(from)
             }
-          } else {
-            navigate(from)
-          }
 
-        }
-      })
-      .catch(err => {
-        const errMes = err.response?.data?.message
-        console.log(errMes)
-        setErrorMessage(errMes)
-      })
+          }
+        })
+        .catch(err => {
+          const errMes = err.response?.data?.message
+          setErrorMessage(errMes)
+        })
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   return (

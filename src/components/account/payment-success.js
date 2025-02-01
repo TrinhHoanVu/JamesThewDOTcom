@@ -31,12 +31,16 @@ const PaymentConfirmation = () => {
     }, [])
 
     const handleRedirect = () => {
-        const previousPage = localStorage.getItem("previousPage");
-        if (previousPage) {
-            navigate(previousPage);
-            localStorage.removeItem("previousPage");
-        } else {
-            navigate("/");
+        try {
+            const previousPage = localStorage.getItem("previousPage");
+            if (previousPage) {
+                navigate(previousPage);
+                localStorage.removeItem("previousPage");
+            } else {
+                navigate("/");
+            }
+        } catch (error) {
+            console.log(error)
         }
     };
 
