@@ -228,9 +228,7 @@ const CommentForm = ({ contestId, contest }) => {
         if (!confirmDelete) return;
 
         try {
-            await axios.delete(`http://localhost:5231/api/Contest/deleteComment`, {
-                params: { idComment: loggedAccountComment.idComment }
-            });
+            await axios.delete(`http://localhost:5231/api/Contest/deleteComment/${loggedAccountComment.idComment}`);
             setCommented(false);
             setLoggedAccountComment([]);
             setComments(comments.filter(comment => comment.idComment !== loggedAccountComment.idComment));

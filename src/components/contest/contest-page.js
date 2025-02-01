@@ -43,35 +43,40 @@ const ContestPage = () => {
     };
 
     return (
-        <div className="contest-container">
-            <h2 className="contest-title">Contest List</h2>
-            <div className="contest-list">
-                {contests.length > 0 ? (
-                    contests.map((contest) => (
-                        <ContestCard key={contest.idContest} contest={contest} onViewDetails={handleViewDetails} />
-                    ))
-                ) : (
-                    <p>No contests available.</p>
+        <div style={{ maxHeight: "700px", width: "100%" }}>
+            <div>
+                <img src="/images/contestbanner.jpg" alt="" className="contestdt-image" />
+                <h1 className="contest-title">Contest Competition</h1>
+            </div>
+            <div className="contest-container">
+                <div className="contest-list">
+                    {contests.length > 0 ? (
+                        contests.map((contest) => (
+                            <ContestCard key={contest.idContest} contest={contest} onViewDetails={handleViewDetails} />
+                        ))
+                    ) : (
+                        <p>No contests available.</p>
+                    )}
+                </div>
+
+                {total > pageSize && (
+                    <div className="contest-pagination">
+                        <button className="contest-pagination-button" onClick={handlePreviousPage} disabled={pageNumber === 1}>
+                            Previous
+                        </button>
+                        <span className="contest-pagination-text">
+                            Page {pageNumber} of {Math.ceil(total / pageSize)}
+                        </span>
+                        <button
+                            className="contest-pagination-button"
+                            onClick={handleNextPage}
+                            disabled={(pageNumber - 1) * pageSize + contests.length >= total}
+                        >
+                            Next
+                        </button>
+                    </div>
                 )}
             </div>
-
-            {total > pageSize && (
-                <div className="contest-pagination">
-                    <button className="contest-pagination-button" onClick={handlePreviousPage} disabled={pageNumber === 1}>
-                        Previous
-                    </button>
-                    <span className="contest-pagination-text">
-                        Page {pageNumber} of {Math.ceil(total / pageSize)}
-                    </span>
-                    <button
-                        className="contest-pagination-button"
-                        onClick={handleNextPage}
-                        disabled={(pageNumber - 1) * pageSize + contests.length >= total}
-                    >
-                        Next
-                    </button>
-                </div>
-            )}
         </div>
     );
 };
