@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import ContestEditForm from "./contest-edit";
 import $ from "jquery";
 import 'datatables.net-dt/css/dataTables.dataTables.css';
@@ -43,6 +43,7 @@ function ContestManagement() {
     const [attendeesCount, setAttendeesCount] = useState({});
     const [contestEdit, setContestEdit] = useState(false);
     const [idContest, setIdContest] = useState(0);
+    const navigate = useNavigate()
 
     useThrottledResizeObserver(() => {
         if (contests.length > 0) {
@@ -55,7 +56,23 @@ function ContestManagement() {
     const fetchContests = async () => {
         try {
             const response = await axios.get("http://localhost:5231/api/Contest/getAll");
-            const contestData = response.data.data.$values || [];
+            let contestData = response.data.data.$values || [];
+
+            const objectMap = {};
+
+            contestData.forEach((contest) => {
+                if (contest.winner) {
+                    objectMap[contest.winner.$id] = contest.winner;
+                }
+            });
+
+            contestData = contestData.map((contest) => {
+                if (contest.winner && contest.winner.$ref) {
+                    contest.winner = objectMap[contest.winner.$ref] || null;
+                }
+                return contest;
+            });
+
             setContests(contestData);
             setLoading(false);
         } catch (err) {
@@ -125,8 +142,12 @@ function ContestManagement() {
     };
 
     const handleAttendeesDetail = (contestId) => {
-        // fetchAttendeesList(contestId);
+        navigate(`/contest/attendees/${contestId}`)
     };
+
+    const navigateToEvaluation = (contestId) => {
+        navigate(`/contest/evaluation/${contestId}`)
+    }
 
     return (
         <div className="contest-management-body">
@@ -137,13 +158,14 @@ function ContestManagement() {
                 ) : error ? (
                     <p className="contest-management-error-message">{error}</p>
                 ) : (
-                    <table id="contestTable" className="display">
+                    <table id="contestTable" className="display" style={{ backgroundColor: "transparent" }}>
                         <thead>
                             <tr>
                                 <th>Name</th>
                                 <th>Price ($)</th>
                                 <th>Attendees</th>
                                 <th>Status</th>
+                                <th>Winner</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -158,14 +180,16 @@ function ContestManagement() {
                                     <td className="price">
                                         {contest.price && !isNaN(contest.price) ? contest.price.toFixed(2) : "N/A"}
                                     </td>
-                                    <td onClick={() => handleAttendeesDetail(contest.idContest)} style={{ cursor: "pointer", color: "blue" }}>
-                                        <Link to={`/contest/${contest.idContest}/attendees`} style={{ cursor: "pointer", color: "blue" }}
-                                            state={{ contestId: contest.name }}>
-                                            {attendeesCount[contest.idContest] || 0}
-                                        </Link>
+                                    <td style={{ cursor: "pointer" }} onClick={() => handleAttendeesDetail(contest.idContest)}>
+                                        <span>{attendeesCount[contest.idContest] || 0}</span>
                                     </td>
                                     <td className={`status ${contest.status ? "active" : "inactive"}`}>
                                         {contest.status}
+                                    </td>
+                                    <td style={{ cursor: "pointer" }}> {contest.winner ? (<span>{contest.winner.name}</span>) :
+                                        (<span onClick={() => navigateToEvaluation(contest.idContest)}>
+                                            No Winner
+                                        </span>)}
                                     </td>
                                     <td className="actions">
                                         {contest.status.toUpperCase() !== "FINISHED" ? (

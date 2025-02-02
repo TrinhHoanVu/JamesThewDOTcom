@@ -9,6 +9,7 @@ import ContestDetail from "../components/contest/contest-detail"
 import PaymentConfirmation from "../components/account/payment-success"
 import AttendeesDetail from "../components/contest/attendees-detail"
 import ContestPage from "../components/contest/contest-page"
+import Evaluation from "../components/contest/evaluation"
 
 const publicRouter = [
     {
@@ -61,8 +62,13 @@ const privateRouter = [
 
 const evaluateRouter = [
     {
-        path: "/contest/:contestId/attendees",
+        path: "/contest/attendees/:contestId",
         element: <AttendeesDetail />,
+        roles: ["ADMIN", "SUPERADMIN"]
+    },
+    {
+        path: "/contest/evaluation/:contestId",
+        element: <Evaluation />,
         roles: ["ADMIN", "SUPERADMIN"]
     }
 ]
