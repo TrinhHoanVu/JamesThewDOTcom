@@ -11,6 +11,10 @@ function ContestEditForm({ idContest, onClose, reloadContests }) {
     const [endDate, setEndDate] = useState("");
     const [status, setStatus] = useState("");
     const [initialStatus, setInitialStatus] = useState("");
+    const [initialName, setInitialName] = useState("");
+    const [initialDescription, setInitialDescription] = useState(() => EditorState.createEmpty());
+    const [initialPrice, setInitialPrice] = useState(0);
+    const [initialEndDate, setInitialEndDate] = useState("");
 
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(true);
@@ -35,6 +39,12 @@ function ContestEditForm({ idContest, onClose, reloadContests }) {
             setStatus(contest.status);
             setInitialStatus(contest.status)
 
+            setInitialName(contest.name);
+            setInitialDescription(contest.description);
+            setInitialPrice(contest.price);
+            setInitialEndDate(contest.endDate);
+            setInitialStatus(contest.status);
+
             if (contest.description) {
                 const contentState = ContentState.createFromText(contest.description);
                 setDescription(EditorState.createWithContent(contentState));
@@ -50,6 +60,16 @@ function ContestEditForm({ idContest, onClose, reloadContests }) {
         if (!date) return '';
         const parsedDate = new Date(date);
         return parsedDate.toISOString().split('T')[0];
+    };
+
+    const formatDateText = (date) => {
+        if (!date) return '';
+        const parsedDate = new Date(date);
+        return parsedDate.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+        });
     };
 
     const handleStartDateChange = (value) => {
@@ -122,46 +142,60 @@ function ContestEditForm({ idContest, onClose, reloadContests }) {
     };
 
     const handleSave = async (e) => {
-        const validationErrors = validate();
-        if (Object.keys(validationErrors).length > 0) {
-            setErrors(validationErrors);
-            return;
-        }
         e.preventDefault();
-        try {
-            const descriptionText = description.getCurrentContent().getPlainText();
-            setLoadingPost(true)
-            await axios.put(`http://localhost:5231/api/Contest/update/${idContest}`, {
-                name,
-                description: descriptionText,
-                price,
-                startDate,
-                endDate,
-                status,
-            });
 
-            if (initialStatus === "NOT YET" && status === "HAPPENING") {
-                await axios.post("http://localhost:5231/api/Contest/sendNewContest", {
+        try {
+            const validationErrors = validate();
+            if (Object.keys(validationErrors).length > 0) {
+                setErrors(validationErrors);
+                return;
+            }
+            try {
+                const descriptionText = description.getCurrentContent().getPlainText();
+                setLoadingPost(true)
+                await axios.put(`http://localhost:5231/api/Contest/update/${idContest}`, {
                     name,
                     description: descriptionText,
                     price,
                     startDate,
                     endDate,
                     status,
-                })
-            }
-            setLoadingPost(false)
-            alert("Contest updated successfully!");
+                });
 
-            if (reloadContests) {
-                await reloadContests();
+                let subject;
+                let body;
+
+                if (initialStatus === "NOT YET" && status === "HAPPENING") {
+                    subject = name + " is coming"
+                    body = name + "\n" + descriptionText + "\n" + price + "\n" + formatDateText(startDate) + "\n" + formatDateText(endDate)
+                    await axios.post("http://localhost:5231/api/Contest/sendNewContest", {
+                        To: "",
+                        subject: subject,
+                        Body: body
+                    })
+                } else if (initialStatus === "HAPPENING" && status === "HAPPENING") {
+                    subject = name + " has been updated"
+                    body = name + "\n\n" + descriptionText + "\nPrice: $" + price + "\nFrom: " + formatDateText(startDate) + " To " + formatDateText(endDate)
+                    await axios.post("http://localhost:5231/api/Contest/sendNewContest", {
+                        To: "",
+                        subject,
+                        Body: body
+                    });
+                }
+
+                setLoadingPost(false)
+                alert("Contest updated successfully!");
+
+                if (reloadContests) {
+                    await reloadContests();
+                }
+                if (onClose) {
+                    onClose();
+                }
+            } catch (err) {
+                alert("Failed to update contest. Please try again.");
             }
-            if (onClose) {
-                onClose();
-            }
-        } catch (err) {
-            alert("Failed to update contest. Please try again.");
-        }
+        } catch (er) { console.log(er) }
     };
 
     useEffect(() => {
