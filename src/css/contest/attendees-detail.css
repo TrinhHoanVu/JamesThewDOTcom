@@ -65,7 +65,7 @@
 
 
 .close-modal-button {
-    background-color: #4CAF50;
+    background-color: #ffc107;
     color: white;
     border: none;
     border-radius: 5px;
@@ -73,7 +73,8 @@
 }
 
 .close-modal-button:hover {
-    background-color: #45a049;
+    background-color: #e67e22;
+    color: white;
 }
 
 .dataTables_wrapper div.row:first-of-type {

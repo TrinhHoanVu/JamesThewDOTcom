@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import ContestEditForm from "./contest-edit";
 import $ from "jquery";
 import 'datatables.net-dt/css/dataTables.dataTables.css';
@@ -110,7 +110,8 @@ function ContestManagement() {
 
     const handleEdit = (contestId, status) => {
         try {
-            if (status.toUpperCase() === "NOT YET") {
+            const statusContest = ["NOT YET", "HAPPENING"];
+            if (statusContest.includes(status.toUpperCase())) {
                 setIdContest(contestId);
                 setContestEdit(true);
             } else {
@@ -134,7 +135,7 @@ function ContestManagement() {
                     }
                 }
             } else {
-                alert("This contest has already begun");
+                alert("This contest has already finshed");
             }
         } catch (err) {
             console.log(err)
@@ -148,6 +149,13 @@ function ContestManagement() {
     const navigateToEvaluation = (contestId) => {
         navigate(`/contest/evaluation/${contestId}`)
     }
+
+    const navigateToSpecificContestPage = (contestId) => {
+        navigate(`/contest/${contestId}`)
+    }
+    const reloadContests = async () => {
+        await fetchContests();
+    };
 
     return (
         <div className="contest-management-body">
@@ -172,10 +180,8 @@ function ContestManagement() {
                         <tbody>
                             {contests.map((contest) => (
                                 <tr key={contest.idContest}>
-                                    <td>
-                                        <Link to={`/contest/${contest.idContest}`} className="contest-name-link">
-                                            {contest.name}
-                                        </Link>
+                                    <td style={{ cursor: "pointer" }} onClick={() => navigateToSpecificContestPage(contest.idContest)}>
+                                        {contest.name}
                                     </td>
                                     <td className="price">
                                         {contest.price && !isNaN(contest.price) ? contest.price.toFixed(2) : "N/A"}
@@ -220,7 +226,7 @@ function ContestManagement() {
             {contestEdit && (
                 <div className="edit-modal-overlay">
                     <div className="edit-modal">
-                        <ContestEditForm idContest={idContest} onClose={() => setContestEdit(false)} />
+                        <ContestEditForm idContest={idContest} onClose={() => setContestEdit(false)} reloadContests={reloadContests} />
                         <button className="close-modal-button" onClick={() => setContestEdit(false)}>
                             Close
                         </button>
