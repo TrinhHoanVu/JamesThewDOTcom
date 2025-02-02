@@ -10,10 +10,12 @@ function ContestEditForm({ idContest, onClose, reloadContests }) {
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
     const [status, setStatus] = useState("");
+    const [initialStatus, setInitialStatus] = useState("");
 
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [loadingPost, setLoadingPost] = useState(false);
 
     const editorRef = useRef();
 
@@ -31,6 +33,7 @@ function ContestEditForm({ idContest, onClose, reloadContests }) {
             setStartDate(contest.startDate);
             setEndDate(contest.endDate);
             setStatus(contest.status);
+            setInitialStatus(contest.status)
 
             if (contest.description) {
                 const contentState = ContentState.createFromText(contest.description);
@@ -126,9 +129,8 @@ function ContestEditForm({ idContest, onClose, reloadContests }) {
         }
         e.preventDefault();
         try {
-
             const descriptionText = description.getCurrentContent().getPlainText();
-
+            setLoadingPost(true)
             await axios.put(`http://localhost:5231/api/Contest/update/${idContest}`, {
                 name,
                 description: descriptionText,
@@ -138,6 +140,17 @@ function ContestEditForm({ idContest, onClose, reloadContests }) {
                 status,
             });
 
+            if (initialStatus === "NOT YET" && status === "HAPPENING") {
+                await axios.post("http://localhost:5231/api/Contest/sendNewContest", {
+                    name,
+                    description: descriptionText,
+                    price,
+                    startDate,
+                    endDate,
+                    status,
+                })
+            }
+            setLoadingPost(false)
             alert("Contest updated successfully!");
 
             if (reloadContests) {
@@ -150,7 +163,6 @@ function ContestEditForm({ idContest, onClose, reloadContests }) {
             alert("Failed to update contest. Please try again.");
         }
     };
-
 
     useEffect(() => {
         fetchContest();
@@ -195,7 +207,8 @@ function ContestEditForm({ idContest, onClose, reloadContests }) {
                         type="date"
                         id="startDate"
                         value={formatDate(startDate)}
-                        onChange={(e) => handleStartDateChange(e.target.value)}
+                        onChange={status !== "HAPPENING" ? (e) => handleStartDateChange(e.target.value) : undefined}
+                        readOnly={status === "HAPPENING"}
                         style={{ width: "100%", padding: "8px", margin: "5px 0" }}
                     />
                     {errors.startDate && <span style={{ color: "red" }}>{errors.startDate}</span>}
@@ -247,10 +260,11 @@ function ContestEditForm({ idContest, onClose, reloadContests }) {
 
                 <button
                     onClick={handleSave}
-                    style={{ padding: "10px 20px", backgroundColor: "#28a745", color: "white", border: "none", borderRadius: "4px" }}
+                    style={{ padding: "10px 20px", backgroundColor: "#ffc107", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}
                 >
                     Save
                 </button>
+                {loadingPost && <div style={{ marginTop: "10px", color: "blue" }}>Saving contest, please wait...</div>}
             </div>
         </div>
     );
