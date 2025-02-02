@@ -35,7 +35,7 @@ function useThrottledResizeObserver(callback, delay = 200) {
     return resizeObserverRef;
 }
 
-function AttendeesDetail() {
+function Evaluation() {
     const { contestId } = useParams();
     const [attendeesList, setAttendeesList] = useState([]);
     const [selectedComments, setSelectedComments] = useState([]);
@@ -44,6 +44,8 @@ function AttendeesDetail() {
     const compareTableRef = useRef(null)
     const [tableCompare, setTableCompare] = useState(false);
     const [checkedState, setCheckedState] = useState();
+    const [contest, setContest] = useState({});
+
 
     useThrottledResizeObserver(() => {
         if (attendeesList.length > 0) {
@@ -52,12 +54,24 @@ function AttendeesDetail() {
     });
 
     useEffect(() => {
-        fetchAttendeesList(contestId);
+        if(contestId){
+            fetchAttendeesList(contestId);
+            fetchContest()
+        }
     }, [contestId]);
 
     useEffect(() => {
         setCheckedState(new Array(attendeesList.length).fill(false));
     }, [attendeesList]);
+
+    const fetchContest = async () => {
+        try {
+            const response = await axios.get("http://localhost:5231/api/Contest/getSpecificContest", { params: { idContest: contestId } });
+            setContest(response.data);
+        } catch (err) {
+            console.log("not found contest")
+        }
+    };
 
     const fetchAttendeesList = async (contestId) => {
         try {
@@ -67,7 +81,6 @@ function AttendeesDetail() {
 
             if (response.data) {
                 setAttendeesList(response.data.$values || []);
-                // console.log("Attendees list:", response.data.$values);
             }
         } catch (err) {
             console.error("Error fetching attendees list:", err);
@@ -113,41 +126,66 @@ function AttendeesDetail() {
         setSelectedComments([]);
     }
 
-    const handleApproveComments = async () => {
+    const handleCompare = () => {
         try {
-            const commentsToApprove = selectedComments.filter(comment => !comment.isApproved);
+            if (selectedComments.length > 1) {
+                setTableCompare(true);
 
-            if (commentsToApprove.length === 0) {
-                alert("No comments need approval.");
+                setTimeout(() => {
+                    compareTableRef.current?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start",
+                    });
+                }, 0);
+            } else {
+                alert("Please select more than two comments to compare.");
+            }
+        } catch (err) {
+            console.log(err)
+        }
+    };
+
+    const handleSaveChanges = async () => {
+        try {
+            const markedAttendees = attendeesList.filter(attendee => attendee.mark && attendee.mark > 0);
+
+            if (markedAttendees.length === 0) {
+                alert("No marked comments to save.");
                 return;
             }
 
-            await Promise.all(
-                commentsToApprove.map(comment =>
-                    axios.put(`http://localhost:5231/api/Contest/approveComment/${comment.idComment}`)
-                )
+            const promises = markedAttendees.map(attendee =>
+                axios.post(`http://localhost:5231/api/Contest/updateMark/${attendee.idComment}`, {
+                    mark: attendee.mark
+                })
             );
 
-            setSelectedComments(prevComments =>
-                prevComments.map(comment =>
-                    commentsToApprove.some(c => c.idComment === comment.idComment)
-                        ? { ...comment, isApproved: true }
-                        : comment
-                )
-            );
+            await Promise.all(promises);
 
-            setAttendeesList(prevAttendeesList =>
-                prevAttendeesList.map(attendee =>
-                    commentsToApprove.some(c => c.idComment === attendee.idComment)
-                        ? { ...attendee, isApproved: true }
-                        : attendee
-                )
-            );
-
-            alert("Selected comments have been approved!");
+            alert("Marks have been saved to the database successfully!");
         } catch (error) {
-            console.error("Error approving comments:", error);
-            alert("Failed to approve comments. Please try again.");
+            console.error("Error saving marks:", error);
+            alert("Failed to save marks. Please try again.");
+        }
+    };
+
+
+    const handleSaveMark = () => {
+        try {
+            setAttendeesList((prevAttendeesList) =>
+                prevAttendeesList.map((attendee) => {
+                    const selectedComment = selectedComments.find((comment) => comment.content === attendee.content);
+                    if (selectedComment) {
+                        return { ...attendee, mark: selectedComment.mark };
+                    }
+                    return attendee;
+                })
+            );
+            alert("Marks have been updated successfully!");
+            setSelectedComments([]);
+            setTableCompare(false);
+        } catch (error) {
+            console.log(error)
         }
     };
 
@@ -175,7 +213,7 @@ function AttendeesDetail() {
                             <th className="name-column">Name</th>
                             <th className="comment-column">Comment</th>
                             <th className="likes-column">Likes</th>
-                            <th className="status-column">Status</th>
+                            <th className="evaluate-column">Mark</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -188,7 +226,18 @@ function AttendeesDetail() {
                                     <td>{attendee.account.name}</td>
                                     <td>{attendee.content}</td>
                                     <td style={{ textAlign: "left" }}>{attendee.likes}</td>
-                                    <td>{attendee.isApproved ? "Approved" : "Waiting"}</td>
+                                    <td>
+                                        <input type="number"
+                                            className="evaluate-input"
+                                            min="1"
+                                            max="10"
+                                            defaultValue={attendee.mark}
+                                            onInput={(e) => {
+                                                if (e.target.value < 1) e.target.value = 1;
+                                                if (e.target.value > 10) e.target.value = 10;
+                                            }}
+                                            onChange={(e) => { attendee.mark = e.target.value }} />
+                                    </td>
                                 </tr>
                             ))
                         ) : (
@@ -198,17 +247,20 @@ function AttendeesDetail() {
                         )}
                     </tbody>
                 </table>
-                <div style={{ display: "flex", justifyContent: "start", flexDirection: "row", gap: "10px" }}>
+                {!contest.winner ? (<div style={{ display: "flex", justifyContent: "start", flexDirection: "row", gap: "10px" }}>
+                    <button className="compare-button" onClick={handleCompare}>
+                        Compare
+                    </button>
                     <button className="compare-button" onClick={handleClear}>
                         Clear
                     </button>
-                    <button className="compare-button" onClick={handleApproveComments}>
-                        Approve
+                    <button className="compare-button" onClick={handleSaveChanges}>
+                        Save Changes
                     </button>
-                </div>
+                </div>) : (<span></span>)}
                 <br /><br /><br />
 
-                {/* {tableCompare && (
+                {tableCompare && (
                     <div className="selected-comments-container" ref={compareTableRef}>
                         <div style={{ textAlign: "center", display: "flex", alignItems: "center", justifyContent: "space-between", flexDirection: "row", height: "30px" }}>
                             <div style={{ textAlign: "center", width: "97%" }}>
@@ -236,16 +288,19 @@ function AttendeesDetail() {
                                         <td>{comment.content}</td>
                                         <td style={{ textAlign: "left" }}>{comment.likes}</td>
                                         <td>
-                                            <input type="number"
-                                                min="1"
-                                                className="evaluate-input"
-                                                max="10"
-                                                onInput={(e) => {
-                                                    if (e.target.value < 1) e.target.value = 1;
-                                                    if (e.target.value > 10) e.target.value = 10;
-                                                }}
-                                                onChange={(e) => { comment.mark = e.target.value }}
-                                            />
+                                            <div style={{ display: "flex", flex: "column", alignItems: "end", gap: "20px" }}>
+                                                <input type="number"
+                                                    min="1"
+                                                    className="evaluate-input"
+                                                    max="10"
+                                                    value={comment.mark !== "" ? comment.mark : 0}
+                                                    onInput={(e) => {
+                                                        if (e.target.value < 1) e.target.value = 1;
+                                                        if (e.target.value > 10) e.target.value = 10;
+                                                    }}
+                                                    onChange={(e) => { comment.mark = e.target.value }}
+                                                />
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -254,11 +309,9 @@ function AttendeesDetail() {
                         <br /><br /><br />
                     </div>
                 )}
- */}
-
             </div>
         </div >
     );
 }
 
-export default AttendeesDetail;
+export default Evaluation
