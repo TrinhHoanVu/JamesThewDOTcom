@@ -10,6 +10,8 @@ import PaymentConfirmation from "../components/account/payment-success"
 import AttendeesDetail from "../components/contest/attendees-detail"
 import ContestPage from "../components/contest/contest-page"
 import Evaluation from "../components/contest/evaluation"
+import TipsPage from "../components/tips/tips-page"
+import TipDetail from "../components/tips/tip-detail"
 
 const publicRouter = [
     {
@@ -47,6 +49,14 @@ const publicRouter = [
     {
         path: "/success",
         element: <PaymentConfirmation />
+    },
+    {
+        path: "/tips",
+        element: <TipsPage />
+    },
+    {
+        path: "/tips/:id",
+        element: <TipDetail />
     }
 ]
 
@@ -69,7 +79,7 @@ const evaluateRouter = [
     {
         path: "/contest/evaluation/:contestId",
         element: <Evaluation />,
-        roles: ["SUPERADMIN"]
+        roles: ["ADMIN", "SUPERADMIN"]
     }
 ]
 export {
