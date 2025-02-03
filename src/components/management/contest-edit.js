@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { Editor, EditorState, ContentState } from "draft-js";
 import "draft-js/dist/Draft.css";
 import axios from "axios";
+import Swal from 'sweetalert2';
+
 
 function ContestEditForm({ idContest, onClose, reloadContests }) {
     const [name, setName] = useState("");
@@ -184,7 +186,13 @@ function ContestEditForm({ idContest, onClose, reloadContests }) {
                 }
 
                 setLoadingPost(false)
-                alert("Contest updated successfully!");
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Contest updated successfully!',
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+
 
                 if (reloadContests) {
                     await reloadContests();
@@ -193,7 +201,12 @@ function ContestEditForm({ idContest, onClose, reloadContests }) {
                     onClose();
                 }
             } catch (err) {
-                alert("Failed to update contest. Please try again.");
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Failed to update contest',
+                    text: 'Please try again later.',
+                });
+
             }
         } catch (er) { console.log(er) }
     };

@@ -5,6 +5,8 @@ import { Country, State, City } from 'country-state-city';
 import "../../css/management/account-profile.css"
 import PaymentForm from "../account/payment-form";
 import { error } from "jquery";
+import Swal from 'sweetalert2';
+
 
 function AccountDetail() {
     const { tokenInfor } = useContext(DataContext);
@@ -149,7 +151,12 @@ function AccountDetail() {
 
         try {
             if (name === initialName && address === initialAddress && phoneNumber === initialPhoneNumber) {
-                alert("No changes detected.");
+                Swal.fire({
+                    icon: 'info',
+                    title: 'No changes detected.',
+                    showConfirmButton: false,
+                    timer: 1500
+                });
                 return;
             }
         } catch (err) {
@@ -161,7 +168,12 @@ function AccountDetail() {
             await axios.put("http://localhost:5231/api/Account/updateProfile", { email, name, address, phoneNumber })
                 .then(res => {
                     if (res.status === 200) {
-                        alert("Profile updated successfully!");
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Profile updated successfully!',
+                            showConfirmButton: false,
+                            timer: 1500
+                        });
                     }
                 })
                 .catch(err => console.log(err))

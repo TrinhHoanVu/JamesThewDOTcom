@@ -6,6 +6,7 @@ import 'datatables.net-dt/css/dataTables.dataTables.css';
 import "datatables.net";
 import "../../css/contest/attendees-detail.css";
 import { FaCheck } from "react-icons/fa";
+import Swal from "sweetalert2";
 
 function useThrottledResizeObserver(callback, delay = 200) {
     const resizeObserverRef = useRef(null);
@@ -71,7 +72,11 @@ function AttendeesDetail() {
             }
         } catch (err) {
             console.error("Error fetching attendees list:", err);
-            alert("Failed to load attendees. Please try again.");
+            Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: "Failed to load attendees. Please try again."
+            });
         }
     };
 
@@ -118,7 +123,11 @@ function AttendeesDetail() {
             const commentsToApprove = selectedComments.filter(comment => !comment.isApproved);
 
             if (commentsToApprove.length === 0) {
-                alert("No comments need approval.");
+                Swal.fire({
+                    icon: "info",
+                    title: "No Action Needed",
+                    text: "No comments need approval."
+                });
                 return;
             }
 
@@ -144,10 +153,18 @@ function AttendeesDetail() {
                 )
             );
 
-            alert("Selected comments have been approved!");
+            Swal.fire({
+                icon: "success",
+                title: "Success",
+                text: "Selected comments have been approved!"
+            });
         } catch (error) {
             console.error("Error approving comments:", error);
-            alert("Failed to approve comments. Please try again.");
+            Swal.fire({
+                icon: "error",
+                title: "Approval Failed",
+                text: "Failed to approve comments. Please try again."
+            });
         }
     };
 

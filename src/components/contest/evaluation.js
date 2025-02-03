@@ -6,6 +6,7 @@ import 'datatables.net-dt/css/dataTables.dataTables.css';
 import "datatables.net";
 import "../../css/contest/attendees-detail.css";
 import { FaCheck } from "react-icons/fa";
+import Swal from "sweetalert2";
 
 function useThrottledResizeObserver(callback, delay = 200) {
     const resizeObserverRef = useRef(null);
@@ -54,7 +55,7 @@ function Evaluation() {
     });
 
     useEffect(() => {
-        if(contestId){
+        if (contestId) {
             fetchAttendeesList(contestId);
             fetchContest()
         }
@@ -84,7 +85,7 @@ function Evaluation() {
             }
         } catch (err) {
             console.error("Error fetching attendees list:", err);
-            alert("Failed to load attendees. Please try again.");
+            Swal.fire("Error", "Failed to load attendees. Please try again.", "error");
         }
     };
 
@@ -138,7 +139,7 @@ function Evaluation() {
                     });
                 }, 0);
             } else {
-                alert("Please select more than two comments to compare.");
+                Swal.fire("Warning", "Please select more than two comments to compare.", "warning");
             }
         } catch (err) {
             console.log(err)
@@ -148,24 +149,24 @@ function Evaluation() {
     const handleSaveChanges = async () => {
         try {
             const markedAttendees = attendeesList.filter(attendee => attendee.mark && attendee.mark > 0);
-
+            console.log(markedAttendees)
             if (markedAttendees.length === 0) {
-                alert("No marked comments to save.");
+                Swal.fire("Warning", "No marked comments to save.", "warning");
                 return;
             }
 
             const promises = markedAttendees.map(attendee =>
-                axios.post(`http://localhost:5231/api/Contest/updateMark/${attendee.idComment}`, {
+                axios.put(`http://localhost:5231/api/Contest/updateMark/${attendee.idComment}`, {
                     mark: attendee.mark
                 })
             );
 
             await Promise.all(promises);
 
-            alert("Marks have been saved to the database successfully!");
+            Swal.fire("Success", "Marks have been saved successfully!", "success");
         } catch (error) {
             console.error("Error saving marks:", error);
-            alert("Failed to save marks. Please try again.");
+            Swal.fire("Error", "Failed to save marks. Please try again.", "error");
         }
     };
 
@@ -181,13 +182,60 @@ function Evaluation() {
                     return attendee;
                 })
             );
-            alert("Marks have been updated successfully!");
+            Swal.fire({
+                icon: 'success',
+                title: 'Marks have been updated successfully!',
+                showConfirmButton: false,
+                timer: 1500
+            });
             setSelectedComments([]);
             setTableCompare(false);
         } catch (error) {
             console.log(error)
         }
     };
+
+    const handleConfirmWinner = async () => {
+        if (!attendeesList || attendeesList.length === 0) {
+            Swal.fire("Error!", "No attendees to confirm.", "error");
+            return;
+        }
+
+        const winner = attendeesList.reduce((max, attendee) => (attendee.mark > max.mark ? attendee : max), attendeesList[0]);
+
+        if (!winner || !winner.idComment) {
+            Swal.fire("Error!", "Unable to determine the winner.", "error");
+            return;
+        }
+
+        const result = await Swal.fire({
+            title: "Confirm Winner",
+            text: `Are you sure you want to confirm "${winner.account.name}" as the winner?`,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Yes, Confirm!",
+            cancelButtonText: "Cancel",
+        });
+
+        if (result.isConfirmed) {
+            try {
+                const response = await axios.put(`http://localhost:5231/api/Contest/confirmWinner`, {
+                    contestId: contestId,
+                    winnerId: winner.account.idAccount,
+                });
+
+                if (response.status === 200) {
+                    setContest((prev) => ({ ...prev, winner: winner.account.name }));
+                    Swal.fire("Success!", `${winner.account.name} has been confirmed as the winner.`, "success");
+                } else {
+                    Swal.fire("Error!", "An error occurred while confirming the winner.", "error");
+                }
+            } catch (error) {
+                console.error("Error updating winner:", error);
+                Swal.fire("Error!", "Failed to connect to the server.", "error");
+            }
+        }
+    }
 
     return (
         <div className="attendees-modal-overlay">
@@ -236,6 +284,7 @@ function Evaluation() {
                                                 if (e.target.value < 1) e.target.value = 1;
                                                 if (e.target.value > 10) e.target.value = 10;
                                             }}
+                                            disabled={!!contest.winner}
                                             onChange={(e) => { attendee.mark = e.target.value }} />
                                     </td>
                                 </tr>
@@ -257,6 +306,9 @@ function Evaluation() {
                     <button className="compare-button" onClick={handleSaveChanges}>
                         Save Changes
                     </button>
+                    {contest?.status === "FINISHED" && (<button className="compare-button" onClick={handleConfirmWinner}>
+                        Confirm Winner
+                    </button>)}
                 </div>) : (<span></span>)}
                 <br /><br /><br />
 

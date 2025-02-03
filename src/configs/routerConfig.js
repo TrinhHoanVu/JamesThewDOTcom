@@ -69,7 +69,7 @@ const evaluateRouter = [
     {
         path: "/contest/evaluation/:contestId",
         element: <Evaluation />,
-        roles: ["ADMIN", "SUPERADMIN"]
+        roles: ["SUPERADMIN"]
     }
 ]
 export {
