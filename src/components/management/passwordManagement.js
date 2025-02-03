@@ -2,6 +2,7 @@ import axios from "axios";
 import React, { useContext, useState, useEffect } from "react";
 import { DataContext } from "../../context/DatabaseContext";
 import { Eye, EyeOff } from "lucide-react";
+import Swal from "sweetalert2";
 
 function PasswordManagement() {
     const { tokenInfor } = useContext(DataContext);
@@ -67,10 +68,18 @@ function PasswordManagement() {
                 currentPassword,
                 newPassword
             });
-            alert("Password updated successfully.");
+            Swal.fire({
+                icon: 'success',
+                title: 'Password Updated Successfully',
+                text: 'Your password has been updated successfully.',
+            });
         } catch (err) {
             console.error(err);
-            alert("Failed to update password. Please try again.");
+            Swal.fire({
+                icon: 'error',
+                title: 'Failed to Update Password',
+                text: 'There was an error updating your password. Please try again.',
+            });
         }
     };
 

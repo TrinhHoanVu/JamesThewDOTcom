@@ -5,6 +5,8 @@ import PaymentForm from '../account/payment-form';
 import "../../css/contest/commentForm.css"
 import { AiFillLike } from "react-icons/ai";
 import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
+
 
 
 const CommentForm = ({ contestId, contest }) => {
@@ -210,8 +212,19 @@ const CommentForm = ({ contestId, contest }) => {
     const handleCommentClick = () => {
         try {
             if (!roleUser) {
-                alert('Please log in to comment.');
-                navigate("/login", { state: { from: window.location.pathname } });
+                Swal.fire({
+                    icon: "warning",
+                    title: "Authentication Required",
+                    text: "Please log in to comment.",
+                    showCancelButton: true,
+                    confirmButtonText: "Log in",
+                    cancelButtonText: "Cancel"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        navigate("/login", { state: { from: window.location.pathname } });
+                    }
+                });
+                return;
             }
 
             if (!statusUser) {

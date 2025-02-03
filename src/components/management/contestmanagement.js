@@ -7,6 +7,7 @@ import 'datatables.net-dt/css/dataTables.dataTables.css';
 import "datatables.net";
 import "../../css/management/contest-magenement.css";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import Swal from "sweetalert2";
 
 function useThrottledResizeObserver(callback, delay = 200) {
     const resizeObserverRef = useRef(null);
@@ -115,7 +116,11 @@ function ContestManagement() {
                 setIdContest(contestId);
                 setContestEdit(true);
             } else {
-                alert("This contest has already begun");
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Contest already started',
+                    text: 'You cannot edit a contest that has already started.',
+                });
             }
         } catch (err) {
             console.log(err)
@@ -125,17 +130,31 @@ function ContestManagement() {
     const handleDelete = async (contestId, status) => {
         try {
             if (status.toUpperCase() === "NOT YET") {
-                if (window.confirm("Are you sure you want to delete this contest?")) {
-                    try {
-                        await axios.delete(`http://localhost:5231/api/Contest/delete/${contestId}`);
-                        alert("Contest deleted successfully!");
-                        fetchContests();
-                    } catch (err) {
-                        alert("Failed to delete contest. Please try again.");
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "You won't be able to revert this!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, delete it!',
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        try {
+                            await axios.delete(`http://localhost:5231/api/Contest/delete/${contestId}`);
+                            Swal.fire('Deleted!', 'The contest has been deleted.', 'success');
+                            fetchContests();
+                        } catch (err) {
+                            Swal.fire('Error!', 'Failed to delete the contest. Please try again.', 'error');
+                        }
                     }
-                }
+                });
             } else {
-                alert("This contest has already finshed");
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Contest already finished',
+                    text: 'You cannot delete a contest that has already finished.',
+                });
             }
         } catch (err) {
             console.log(err)
