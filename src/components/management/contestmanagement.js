@@ -212,16 +212,16 @@ function ContestManagement() {
                                     <td style={{ cursor: "pointer" }} onClick={() => navigateToSpecificContestPage(contest.idContest)}>
                                         {contest.name}
                                     </td>
-                                    <td className="price">
+                                    <td className="price" style={{ textAlign: "right" }}>
                                         {contest.price !== null && contest.price !== undefined ? contest.price.toFixed(2) : "N/A"}
                                     </td>
-                                    <td style={{ cursor: "pointer" }} onClick={() => handleAttendeesDetail(contest.idContest)}>
+                                    <td style={{ cursor: "pointer", textAlign: "right" }} onClick={() => handleAttendeesDetail(contest.idContest)}>
                                         <span>{attendeesCount[contest.idContest] || 0}</span>
                                     </td>
-                                    <td className={`status ${contest.status ? "active" : "inactive"}`}>
+                                    <td className={`status ${contest.status ? "active" : "inactive"}`} style={{ textAlign: "right" }}>
                                         {contest.status}
                                     </td>
-                                    <td style={{ cursor: "pointer" }}> {contest.winner ? (<span>{contest.winner.name}</span>) :
+                                    <td style={{ cursor: "pointer", textAlign: "right" }}> {contest.winner ? (<span>{contest.winner.name}</span>) :
                                         (<span onClick={() => navigateToEvaluation(contest.idContest)}>
                                             No Winner
                                         </span>)}
