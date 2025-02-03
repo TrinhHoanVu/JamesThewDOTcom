@@ -34,7 +34,8 @@ const PaymentConfirmation = () => {
         try {
             const previousPage = localStorage.getItem("previousPage");
             if (previousPage) {
-                navigate(previousPage);
+                navigate(previousPage, { replace: true });
+                window.location.reload();
                 localStorage.removeItem("previousPage");
             } else {
                 navigate("/");
@@ -53,7 +54,7 @@ const PaymentConfirmation = () => {
                     you can enjoy all the benefits of our service.
                 </p>
                 <button onClick={handleRedirect} className="confirmation-button">
-                    Go to Homepage
+                    Go to Previous Page
                 </button>
             </div>
         </div>
