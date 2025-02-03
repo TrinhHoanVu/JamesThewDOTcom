@@ -8,6 +8,8 @@ import "datatables.net";
 import "../../css/management/contest-magenement.css";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import Swal from "sweetalert2";
+import { FaPlus } from "react-icons/fa";
+import AddContest from "../contest/add-contest";
 
 function useThrottledResizeObserver(callback, delay = 200) {
     const resizeObserverRef = useRef(null);
@@ -43,6 +45,7 @@ function ContestManagement() {
     const [error, setError] = useState(null);
     const [attendeesCount, setAttendeesCount] = useState({});
     const [contestEdit, setContestEdit] = useState(false);
+    const [addContest, setAddContest] = useState(false);
     const [idContest, setIdContest] = useState(0);
     const navigate = useNavigate()
 
@@ -152,8 +155,8 @@ function ContestManagement() {
             } else {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Contest already finished',
-                    text: 'You cannot delete a contest that has already finished.',
+                    title: 'Contest has already started',
+                    text: 'You cannot delete a contest that has already started.',
                 });
             }
         } catch (err) {
@@ -172,9 +175,16 @@ function ContestManagement() {
     const navigateToSpecificContestPage = (contestId) => {
         navigate(`/contest/${contestId}`)
     }
+
     const reloadContests = async () => {
-        await fetchContests();
+        try {
+            await fetchContests();
+        } catch (er) { console.log(er) }
     };
+
+    const handleAddContest = () => {
+        setAddContest(true)
+    }
 
     return (
         <div className="contest-management-body">
@@ -203,7 +213,7 @@ function ContestManagement() {
                                         {contest.name}
                                     </td>
                                     <td className="price">
-                                        {contest.price && !isNaN(contest.price) ? contest.price.toFixed(2) : "N/A"}
+                                        {contest.price !== null && contest.price !== undefined ? contest.price.toFixed(2) : "N/A"}
                                     </td>
                                     <td style={{ cursor: "pointer" }} onClick={() => handleAttendeesDetail(contest.idContest)}>
                                         <span>{attendeesCount[contest.idContest] || 0}</span>
@@ -241,12 +251,24 @@ function ContestManagement() {
                         </tbody>
                     </table>
                 )}
+                <button className="compare-button" onClick={() => handleAddContest()}><FaPlus /> Add</button>
+
             </div>
             {contestEdit && (
                 <div className="edit-modal-overlay">
                     <div className="edit-modal">
                         <ContestEditForm idContest={idContest} onClose={() => setContestEdit(false)} reloadContests={reloadContests} />
                         <button className="close-modal-button" onClick={() => setContestEdit(false)}>
+                            Close
+                        </button>
+                    </div>
+                </div>
+            )}
+            {addContest && (
+                <div className="edit-modal-overlay">
+                    <div className="edit-modal">
+                        <AddContest onClose={() => setAddContest(false)} reloadContests={reloadContests} />
+                        <button className="close-modal-button" onClick={() => setAddContest(false)}>
                             Close
                         </button>
                     </div>
