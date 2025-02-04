@@ -133,7 +133,7 @@ function TipManagement() {
         setIdTip(idTip)
     }
 
-    const handleDelete = (idTip, name) => {
+    const handleDelete = (idTip, name, idAccountPost) => {
         try {
             Swal.fire({
                 title: `Delete ${name}?`,
@@ -152,17 +152,42 @@ function TipManagement() {
                     if (!reason) {
                         Swal.showValidationMessage('Please enter a reason');
                     }
-                    setDeleteReason(reason);
                     return reason;
                 }
             }).then(async (result) => {
                 if (result.isConfirmed) {
+                    const deleteReason = result.value;
+
                     try {
-                        await axios.delete(`http://localhost:5231/api/Tips/delete/${idTip}`);
-                        localStorage.setItem("managementTab", "tip");
-                        Swal.fire('Deleted!', 'The contest has been deleted.', 'success').then(() => {
-                            window.location.reload();
+                        Swal.fire({
+                            title: 'Deleting...',
+                            text: 'Please wait while the tip is being deleted.',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
                         });
+                        const response = await axios.get(`http://localhost:5231/api/Account/getEmailAccount/${idAccountPost}`)
+
+                        await axios.delete(`http://localhost:5231/api/Tips/delete/${idTip}`);
+
+                        let subject = "Your tip has been deleted!!!"
+                        let body = `Hi there. We announce that your tip has been rejected since ${deleteReason}`
+
+                        await axios.post("http://localhost:5231/api/Contest/sendNewContest", {
+                            To: response.data,
+                            subject: subject,
+                            Body: body
+                        })
+
+                        localStorage.setItem("managementTab", "tip");
+                        Swal.fire({
+                            title: 'Deleted!',
+                            text: 'The tip has been deleted.',
+                            icon: 'success'
+                        }).then(() => {
+                            window.location.reload();
+                        })
                     } catch (err) {
                         Swal.fire('Error!', 'Failed to delete the contest. Please try again.', 'error');
                     }
@@ -258,11 +283,6 @@ function TipManagement() {
         }
     };
 
-
-    const ApproveTip = async (idTip) => {
-
-    }
-
     const handleClear = () => {
         setSelectedTip([])
         setCheckedState(new Array(tips.length).fill(false));
@@ -327,7 +347,7 @@ function TipManagement() {
                                             />
                                             <FaTrash
                                                 className="contest-action-icon delete-icon"
-                                                onClick={() => handleDelete(tip.idTip, tip.name)}
+                                                onClick={() => handleDelete(tip.idTip, tip.name, tip.idAccountPost)}
                                                 title="Delete"
                                                 style={{ cursor: "pointer", marginLeft: "20px" }}
                                             />
