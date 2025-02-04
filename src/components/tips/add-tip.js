@@ -1,17 +1,21 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Editor, EditorState, ContentState, convertFromRaw } from "draft-js";
+import React, { useState, useEffect, useRef, useContext } from "react";
+import { Editor, EditorState } from "draft-js";
 import "draft-js/dist/Draft.css";
 import axios from "axios";
 import Swal from 'sweetalert2';
+import { DataContext } from "../../context/DatabaseContext";
 
-function TipEditForm({ idTip, onClose, reloadTips }) {
+function AddTip({ onClose, reloadTips, IsApproved, title = 'Add tip successfully!' }) {
     const [name, setName] = useState("");
     const [description, setDescription] = useState(() => EditorState.createEmpty());
+    const [tipNameList, setTipNameList] = useState([]);
+    const { tokenInfor } = useContext(DataContext);
     const [isPublic, setIsPublic] = useState(true);
 
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [admin, setAdmin] = useState([]);
     const [loadingPost, setLoadingPost] = useState(false);
 
     const editorRef = useRef();
@@ -20,40 +24,42 @@ function TipEditForm({ idTip, onClose, reloadTips }) {
         editorRef.current.focus();
     };
 
+    useEffect(() => {
+        fetchCurrentAdmin()
+        fetchContestNames()
+    }, [])
 
-    const fetchTip = async () => {
+    const fetchContestNames = async () => {
         try {
-            const response = await axios.get(`http://localhost:5231/api/Tips/detail/${idTip}`);
-            const tip = response.data.contest;
+            const response = await axios.get("http://localhost:5231/api/Tips/getAllTipNames")
+            setTipNameList(response.data.$values)
+        } catch (err) { console.log(err) }
+    }
 
-            setName(tip.name);
-            setIsPublic(tip.isPublic)
-
-            if (tip.decription) {
-                try {
-                    const contentState = convertFromRaw(JSON.parse(tip.decription));
-                    setDescription(EditorState.createWithContent(contentState));
-                } catch (e) {
-                    const contentState = ContentState.createFromText(tip.decription);
-                    setDescription(EditorState.createWithContent(contentState));
-                }
-            }
-
-            setLoading(false);
-        } catch (err) {
-            setError("Failed to load tip details.");
+    const fetchCurrentAdmin = async () => {
+        try {
+            const respone = await axios.get(`http://localhost:5231/api/Account/${tokenInfor.email}`);
+            setAdmin(respone.data)
+            console.log(admin)
+        } catch (error) { console.log(error) }
+        finally {
             setLoading(false);
         }
-    };
+    }
 
     const validate = () => {
         const errors = {};
         try {
+            console.log(tipNameList)
             if (!name.trim()) errors.name = "Name is required.";
+            if (tipNameList.includes(name)) errors.name = "This name has already taken.";
             if (!description.getCurrentContent().hasText()) errors.description = "Description is required.";
         } catch (err) { console.log(err) }
         return errors;
     };
+
+    if (loading) return <p>Loading...</p>;
+    if (error) return <p>{error}</p>;
 
     const handleSave = async (e) => {
         e.preventDefault();
@@ -67,24 +73,35 @@ function TipEditForm({ idTip, onClose, reloadTips }) {
             try {
                 const descriptionText = description.getCurrentContent().getPlainText();
                 setLoadingPost(true)
-                await axios.put(`http://localhost:5231/api/Tips/update/${idTip}`, {
-                    name,
-                    description: descriptionText,
-                    isPublic: isPublic
-                });
+                await axios.post("http://localhost:5231/api/Tips/addTip", {
+                    Name: name,
+                    Description: descriptionText,
+                    IsPublic: isPublic,
+                    IsApproved: IsApproved,
+                    IdAccountPost: admin.idAccount
+                })
+
+
+                let subject = `${name} Competition has already started`
+                let body = name + "\n\n" + descriptionText + "\nPrice: $"
+
+
+                // await axios.post("http://localhost:5231/api/Tips/sendNewContest", {
+                //     To: "",
+                //     subject: subject,
+                //     Body: body
+                // })
 
                 setLoadingPost(false)
-
                 localStorage.setItem("managementTab", "tip");
                 Swal.fire({
                     icon: 'success',
-                    title: 'Tip updated successfully!',
+                    title: title,
                     showConfirmButton: false,
                     timer: 1500
                 }).then(() => {
                     window.location.reload();
                 });
-
 
                 if (reloadTips) {
                     await reloadTips();
@@ -95,20 +112,15 @@ function TipEditForm({ idTip, onClose, reloadTips }) {
             } catch (err) {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Failed to update Tip',
+                    title: 'Failed to add Tip',
                     text: 'Please try again later.',
                 });
-                setLoading(false)
+
             }
         } catch (er) { console.log(er) }
     };
 
-    useEffect(() => {
-        fetchTip();
-    }, []);
-
     if (loading) return <p>Loading...</p>;
-    if (error) return <p>{error}</p>;
 
     return (
         <div style={{
@@ -139,11 +151,13 @@ function TipEditForm({ idTip, onClose, reloadTips }) {
                         <option value="false">Private</option>
                     </select>
                 </div>
+
                 <div style={{
                     marginBottom: "15px", display: "flex",
                     justifyContent: "center", flexDirection: "column", gap: "20px"
                 }}>
-                    <label htmlFor="description">Description:</label>
+                    <label htmlFor="description">Description: {errors.description && <span style={{ color: "red" }}>{errors.description}</span>}
+                    </label>
                     <div style={{
                         border: "1px solid #ddd",
                         height: "250px",
@@ -158,7 +172,6 @@ function TipEditForm({ idTip, onClose, reloadTips }) {
                             onChange={(editorState) => setDescription(editorState)}
                         />
                     </div>
-                    {errors.description && <span style={{ color: "red" }}>{errors.description}</span>}
 
                     <button
                         onClick={handleSave}
@@ -166,11 +179,11 @@ function TipEditForm({ idTip, onClose, reloadTips }) {
                     >
                         Save
                     </button>
-                    {loadingPost && <div style={{ marginTop: "10px", color: "blue" }}>Saving Tip, please wait...</div>}
+                    {loadingPost && <div style={{ marginTop: "10px", color: "blue" }}>Saving contest, please wait...</div>}
                 </div>
             </div>
         </div>
     );
 }
 
-export default TipEditForm;
+export default AddTip;

@@ -17,6 +17,8 @@ function ContestEditForm({ idContest, onClose, reloadContests }) {
     const [initialDescription, setInitialDescription] = useState(() => EditorState.createEmpty());
     const [initialPrice, setInitialPrice] = useState(0);
     const [initialEndDate, setInitialEndDate] = useState("");
+    const [contestNameList, setContestNameList] = useState([]);
+
 
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(true);
@@ -28,6 +30,13 @@ function ContestEditForm({ idContest, onClose, reloadContests }) {
     const focus = () => {
         editorRef.current.focus();
     };
+
+    const fetchContestNames = async () => {
+        try {
+            const response = await axios.get("http://localhost:5231/api/Contest/getAllContestNames")
+            setContestNameList(response.data.$values)
+        } catch (err) { console.log(err) }
+    }
 
     const fetchContest = async () => {
         try {
@@ -127,6 +136,7 @@ function ContestEditForm({ idContest, onClose, reloadContests }) {
         const errors = {};
         try {
             if (!name.trim()) errors.name = "Name is required.";
+            if (contestNameList.includes(name)) errors.name = "This name has already been taken.";
             if (!description.getCurrentContent().hasText()) errors.description = "Description is required.";
             if (price < 0) errors.price = "Price must be greater than or equal to 0.";
             if (!startDate) errors.startDate = "Start date is required.";
@@ -212,7 +222,10 @@ function ContestEditForm({ idContest, onClose, reloadContests }) {
     };
 
     useEffect(() => {
-        fetchContest();
+        try {
+            fetchContest();
+            fetchContestNames()
+        } catch (err) { console.log(err) }
     }, []);
 
     if (loading) return <p>Loading...</p>;

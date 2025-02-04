@@ -32,9 +32,11 @@ function AddContest({ onClose, reloadContests }) {
     };
 
     useEffect(() => {
-        fetchCurrentAdmin()
-        fetchContestNames()
-        setInitialStatus("NOT YET")
+        try {
+            fetchCurrentAdmin()
+            fetchContestNames()
+            setInitialStatus("NOT YET")
+        } catch (err) { console.log(err) }
     }, [])
 
     const fetchContestNames = async () => {
@@ -128,7 +130,7 @@ function AddContest({ onClose, reloadContests }) {
         const errors = {};
         try {
             if (!name.trim()) errors.name = "Name is required.";
-            if (contestNameList.includes(name)) errors.name = "This name has already taken.";
+            if (contestNameList.includes(name)) errors.name = "This name has already been taken.";
             if (!description.getCurrentContent().hasText()) errors.description = "Description is required.";
             if (price < 0) errors.price = "Price must be greater than or equal to 0.";
             if (!startDate) errors.startDate = "Start date is required.";
@@ -185,12 +187,16 @@ function AddContest({ onClose, reloadContests }) {
                 }
 
                 setLoadingPost(false)
+                localStorage.setItem("managementTab", "contest");
+
                 Swal.fire({
                     icon: 'success',
-                    title: 'Contest updated successfully!',
+                    title: 'add contest successfully!',
                     showConfirmButton: false,
                     timer: 1500
-                });
+                }).then(() => {
+                    window.location.reload();
+                });;
 
                 if (reloadContests) {
                     await reloadContests();
@@ -201,7 +207,7 @@ function AddContest({ onClose, reloadContests }) {
             } catch (err) {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Failed to update contest',
+                    title: 'Failed to add contest',
                     text: 'Please try again later.',
                 });
 

@@ -1,7 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "../../css/tip/tip-page.css";
+import { FaTimes } from "react-icons/fa";
+import { DataContext } from "../../context/DatabaseContext";
+import Swal from 'sweetalert2';
+import AddTip from "../tips/add-tip";
 
 const TipsPage = () => {
     const [tips, setTips] = useState([]);
@@ -9,14 +13,22 @@ const TipsPage = () => {
     const [pageNumber, setPageNumber] = useState(1);
     const [pageSize] = useState(10);
     const navigate = useNavigate();
+    const { tokenInfor } = useContext(DataContext);
+    const [user, setUser] = useState(null);
+    const [searchQuery, setSearchQuery] = useState("");
+    const location = useLocation();
+    const [addTipTable, setAddTipTable] = useState(false);
 
     useEffect(() => {
-        fetchTips();
+        try {
+            fetchTips();
+        } catch (err) { console.log(err) }
+
     }, [pageNumber]);
 
     const fetchTips = async () => {
         try {
-            const response = await axios.get(`http://localhost:5231/api/Tips/getAll`, {
+            const response = await axios.get(`http://localhost:5231/api/Tips/getApprovedTips`, {
                 params: { pageNumber, pageSize }
             });
             setTips(response.data.data.$values);
@@ -27,21 +39,72 @@ const TipsPage = () => {
         }
     };
 
+    const fetchUser = async () => {
+        try {
+            const response = await axios.get(`http://localhost:5231/api/Account/${tokenInfor.email}`);
+            if (response) {
+                setUser(response.data);
+            }
+        } catch (error) {
+            console.log(error);
+            showLoginAlert();
+        }
+    };
+
+    const showLoginAlert = () => {
+        Swal.fire({
+            title: "You are not logged in",
+            text: "You need to log in to view this content.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Yes",
+            cancelButtonText: "No"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                navigate("/login", { state: { from: location.pathname } });
+            }
+        });
+    };
+
+    const createOwnTip = () => {
+        try {
+            fetchUser()
+            if (user)
+                setAddTipTable(true)
+        } catch (err) { console.log(err) }
+    }
+
     const handleViewDetails = (tipId) => {
-        navigate(`/tips/${tipId}`);
+        try {
+            navigate(`/tips/${tipId}`);
+        } catch (er) { console.log(er) }
     };
 
     const handleNextPage = () => {
-        if ((pageNumber - 1) * pageSize + tips.length < total) {
-            setPageNumber(pageNumber + 1);
-        }
+        try {
+            if ((pageNumber - 1) * pageSize + tips.length < total) {
+                setPageNumber(pageNumber + 1);
+            }
+        } catch (er) { console.log(er) }
     };
 
     const handlePreviousPage = () => {
-        if (pageNumber > 1) {
-            setPageNumber(pageNumber - 1);
-        }
+        try {
+            if (pageNumber > 1) {
+                setPageNumber(pageNumber - 1);
+            }
+        } catch (er) { console.log(er) }
+
     };
+
+    const filteredTips = tips.filter((tip) =>
+        tip.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (tip.decription && tip.decription.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+
+    const handleClearSearch = () => {
+        setSearchQuery("")
+    }
 
     return (
         <div style={{ maxHeight: "700px", width: "100%" }}>
@@ -50,9 +113,32 @@ const TipsPage = () => {
                 <h1 className="tip-title"> COOKING TIPS</h1>
             </div>
             <div className="contest-container">
+                <div style={{ width: "500px", margin: "0 auto" }}>
+                    <div style={{
+                        display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "500px"
+                    }}>
+                        <button className="compare-button-2" onClick={() => createOwnTip()}>
+                            Create Your Own Tips
+                        </button>
+                        <div style={{ display: "flex", flexDirection: "row", justifyContent: "center", alignItems: "center", gap: "10px" }}>
+                            <input
+                                type="text"
+                                placeholder="Search tips..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="search-input"
+                                style={{ width: "200px", height: "40px" }}
+                            />
+                            {searchQuery && <FaTimes
+                                style={{ fontSize: "25px", cursor: "pointer", borderRadius: "50%", border: "1px black" }}
+                                onClick={() => handleClearSearch()} />}
+                        </div>
+                    </div>
+                </div>
+                <br /><br />
                 <div className="contest-list">
-                    {tips.length > 0 ? (
-                        tips.map((tip, index) => (
+                    {filteredTips.length > 0 ? (
+                        filteredTips.map((tip, index) => (
                             <TipCard key={tip.idTip || `tip-${index}`} tip={tip} onViewDetails={handleViewDetails} />
                         ))
                     ) : (
@@ -75,6 +161,16 @@ const TipsPage = () => {
                         >
                             Next
                         </button>
+                    </div>
+                )}
+                {addTipTable && (
+                    <div className="edit-modal-overlay">
+                        <div className="edit-modal">
+                            <AddTip onClose={() => setAddTipTable(false)} IsApproved={false} title="Add tip successfully! Please wait for approving!"/>
+                            <button className="close-modal-button" onClick={() => setAddTipTable(false)}>
+                                Close
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>
