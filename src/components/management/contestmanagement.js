@@ -111,6 +111,21 @@ function ContestManagement() {
             fetchAttendeesCount(contest.idContest);
         });
     }, [contests]);
+    useEffect(() => {
+        try {
+            if (contests.length > 0) {
+                setTimeout(() => {
+                    $("#contestTable").DataTable({
+                        destroy: true,
+                        pageLength: 5,
+                        lengthMenu: [5, 10],
+                    });
+                }, 500);
+            }
+        } catch (err) {
+            console.log(err);
+        }
+    }, [contests]);
 
     const handleEdit = (contestId, status) => {
         try {

@@ -47,6 +47,21 @@ function Evaluation() {
     const [checkedState, setCheckedState] = useState();
     const [contest, setContest] = useState({});
 
+    useEffect(() => {
+        try {
+            if (attendeesList.length > 0) {
+                setTimeout(() => {
+                    $("#contestTable").DataTable({
+                        destroy: true,   
+                        pageLength: 5,   
+                        lengthMenu: [5, 10],
+                    });
+                }, 500);
+            }
+        } catch (err) {
+            console.log(err);
+        }
+    }, [attendeesList]); 
 
     useThrottledResizeObserver(() => {
         if (attendeesList.length > 0) {
@@ -254,7 +269,7 @@ function Evaluation() {
                             })
                         }>Back</button>
                 </div>
-                <table ref={tableRef} className="display">
+                <table ref={tableRef} id="contestTable" className="display">
                     <thead>
                         <tr>
                             <th className="select-column"></th>

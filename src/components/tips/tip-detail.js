@@ -94,6 +94,7 @@ function TipDetail() {
                     <h1 className="contestdt-title">{tip.name}</h1>
                     <div className="contestdt-info">
                         <p className="contestdt-description">{renderDescription(description)}</p>
+                        <span>Posted by: {tip.account.name}</span>
                     </div>
                 </div>
             </div>
@@ -109,6 +110,7 @@ function TipDetail() {
                         <h1 className="contestdt-title">{tip.name}</h1>
                         <div className="contestdt-info">
                             <p className="contestdt-description">{renderDescription(description)}</p>
+                            <span>Posted by: {tip.account.name}</span>
                         </div>
                     </div>
                 ) : (

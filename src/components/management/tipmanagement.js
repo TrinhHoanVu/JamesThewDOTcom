@@ -5,8 +5,8 @@ import 'datatables.net-dt/css/dataTables.dataTables.css';
 import "datatables.net";
 import "../../css/management/tip-magenement.css";
 import { FaEdit, FaTrash } from "react-icons/fa";
-import Swal from "sweetalert2";
 import { FaPlus } from "react-icons/fa";
+import TipEditForm from "./tip-edit";
 
 function useThrottledResizeObserver(callback, delay = 200) {
     const resizeObserverRef = useRef(null);
@@ -40,7 +40,9 @@ function TipManagement() {
     const [tips, setTips] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [accountPostNameList, setAccountPostNameList] = useState({});
+    // const [accountPostNameList, setAccountPostNameList] = useState({});
+    const [editTable, setEditTable] = useState(false);
+    const [idTip, setIdTip] = useState(0);
 
     useThrottledResizeObserver(() => {
         try {
@@ -54,8 +56,24 @@ function TipManagement() {
 
     useEffect(() => {
         try {
+            if (tips.length > 0) {
+                setTimeout(() => {
+                    $("#contestTable").DataTable({
+                        destroy: true,
+                        pageLength: 5,
+                        lengthMenu: [5, 10],
+                    });
+                }, 500);
+            }
+        } catch (err) {
+            console.log(err);
+        }
+    }, [tips]);
+
+    useEffect(() => {
+        try {
             fetchTips();
-            fetchAccountPost()
+            // fetchAccountPost()
         } catch (err) { console.log(err) }
     }, []);
 
@@ -78,30 +96,40 @@ function TipManagement() {
 
             setTips(contestData);
             setLoading(false);
+            console.log(tips)
         } catch (err) {
             setError("Failed to load contests. Please try again.");
             setLoading(false);
         }
     };
 
-    const fetchAccountPost = async () => {
+    // const fetchAccountPost = async () => {
+    //     try {
+    //         const response = await axios.get("http://localhost:5231/api/Tips/getAccountNamesFromTips")
+    //         setAccountPostNameList(response.data)
+    //     } catch (err) { console.log(err) }
+    // }
+
+    const handleEdit = (idTip) => {
+        setEditTable(true)
+        setIdTip(idTip)
+    }
+
+    const handleDelete = (idTip) => {
         try {
-            const response = await axios.get("http://localhost:5231/api/Tips/getAccountNamesFromTips")
-            setAccountPostNameList(response.data)
-        } catch (err) { console.log(err) }
-    }
 
-    const handleEdit = () => {
-
-    }
-
-    const handleDelete = () => {
-
+        } catch (er) { console.log(er) }
     }
 
     const handleAddContest = () => {
 
     }
+
+    const reloadTips = async () => {
+        try {
+            await fetchTips();
+        } catch (er) { console.log(er) }
+    };
 
     return (
         <div className="contest-management-body">
@@ -118,7 +146,6 @@ function TipManagement() {
                                 <th style={{ width: "10%" }}>Name</th>
                                 <th>Description</th>
                                 <th>Status</th>
-                                <th>Account Post</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -134,22 +161,19 @@ function TipManagement() {
                                             tip.decription || "No description available"}
                                     </td>
                                     <td style={{ cursor: "pointer", textAlign: "right" }}>
-                                        {tip.status ? "Public" : "Private"}
-                                    </td>
-                                    <td className={`status ${tip.status ? "active" : "inactive"}`} style={{ textAlign: "right" }}>
-                                        {accountPostNameList[tip.idAccountPost] || tip.idAccountPost}
+                                        {tip.isPublic ? "Public" : "Private"}
                                     </td>
                                     <td className="actions">
                                         <>
                                             <FaEdit
                                                 className="contest-action-icon edit-icon"
-                                                onClick={() => handleEdit()}
+                                                onClick={() => handleEdit(tip.idTip)}
                                                 title="Edit"
                                                 style={{ cursor: "pointer" }}
                                             />
                                             <FaTrash
                                                 className="contest-action-icon delete-icon"
-                                                onClick={() => handleDelete()}
+                                                onClick={() => handleDelete(tip.idTip)}
                                                 title="Delete"
                                                 style={{ cursor: "pointer", marginLeft: "20px" }}
                                             />
@@ -158,11 +182,19 @@ function TipManagement() {
                                 </tr>
                             ))}
                         </tbody>
-
                     </table>
                 )}
                 <button className="compare-button" onClick={() => handleAddContest()}><FaPlus /> Add</button>
-
+                {editTable && (
+                    <div className="edit-modal-overlay">
+                        <div className="edit-modal">
+                            <TipEditForm idTip={idTip} onClose={() => setEditTable(false)} reloadTips={reloadTips} />
+                            <button className="close-modal-button" onClick={() => setEditTable(false)}>
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
