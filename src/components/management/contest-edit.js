@@ -295,8 +295,14 @@ function ContestEditForm({ idContest, onClose, reloadContests }) {
             }}>
                 <label htmlFor="description">Description:</label>
                 <div style={{
-                    border: "1px solid #ddd", height: "305px", padding: "10px", width: "500px"
-                }} onClick={focus}>
+                    border: "1px solid #ddd",
+                    height: "305px",
+                    padding: "10px",
+                    width: "500px",
+                    overflow: "auto",
+                    backgroundColor: "#fff"
+                }}
+                    onClick={focus}>
                     <Editor
                         ref={editorRef}
                         editorState={description}
