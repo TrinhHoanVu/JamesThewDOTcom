@@ -147,32 +147,45 @@ function AttendeesDetail() {
                 return;
             }
 
-            await Promise.all(
-                commentsToApprove.map(comment =>
-                    axios.put(`http://localhost:5231/api/Contest/approveComment/${comment.idComment}`)
-                )
-            );
-
-            setSelectedComments(prevComments =>
-                prevComments.map(comment =>
-                    commentsToApprove.some(c => c.idComment === comment.idComment)
-                        ? { ...comment, isApproved: true }
-                        : comment
-                )
-            );
-
-            setAttendeesList(prevAttendeesList =>
-                prevAttendeesList.map(attendee =>
-                    commentsToApprove.some(c => c.idComment === attendee.idComment)
-                        ? { ...attendee, isApproved: true }
-                        : attendee
-                )
-            );
-
             Swal.fire({
-                icon: "success",
-                title: "Success",
-                text: "Selected comments have been approved!"
+                title: 'Are you sure?',
+                text: 'Do you want to approve all the changes?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, approve them!',
+                cancelButtonText: 'No, cancel'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    await Promise.all(
+                        commentsToApprove.map(comment =>
+                            axios.put(`http://localhost:5231/api/Contest/approveComment/${comment.idComment}`)
+                        )
+                    );
+
+                    setSelectedComments(prevComments =>
+                        prevComments.map(comment =>
+                            commentsToApprove.some(c => c.idComment === comment.idComment)
+                                ? { ...comment, isApproved: true }
+                                : comment
+                        )
+                    );
+
+                    setAttendeesList(prevAttendeesList =>
+                        prevAttendeesList.map(attendee =>
+                            commentsToApprove.some(c => c.idComment === attendee.idComment)
+                                ? { ...attendee, isApproved: true }
+                                : attendee
+                        )
+                    );
+
+                    Swal.fire({
+                        icon: "success",
+                        title: "Success",
+                        text: "Selected comments have been approved!"
+                    });
+                }
             });
         } catch (error) {
             console.error("Error approving comments:", error);

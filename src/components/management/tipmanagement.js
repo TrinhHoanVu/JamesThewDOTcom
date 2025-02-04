@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import $ from "jquery";
 import 'datatables.net-dt/css/dataTables.dataTables.css';
@@ -11,6 +12,7 @@ import AddTip from "../tips/add-tip";
 import Swal from 'sweetalert2';
 import { FaCheck } from "react-icons/fa";
 import { FaTimes } from "react-icons/fa";
+
 
 function useThrottledResizeObserver(callback, delay = 200) {
     const resizeObserverRef = useRef(null);
@@ -44,13 +46,15 @@ function TipManagement() {
     const [tips, setTips] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [accountPostNameList, setAccountPostNameList] = useState({});
+    const [accountPostNameList, setAccountPostNameList] = useState(new Map());
     const [editTable, setEditTable] = useState(false);
     const [idTip, setIdTip] = useState(0);
     const [addTipTable, setAddTipTable] = useState(false);
     const [checkedState, setCheckedState] = useState();
     const [selectedTip, setSelectedTip] = useState([]);
+    const [deleteReason, setDeleteReason] = useState("");
 
+    const navigate = useNavigate();
 
     useThrottledResizeObserver(() => {
         try {
@@ -105,7 +109,6 @@ function TipManagement() {
 
             setTips(contestData);
             setLoading(false);
-            console.log(tips)
         } catch (err) {
             setError("Failed to load contests. Please try again.");
             setLoading(false);
@@ -114,8 +117,14 @@ function TipManagement() {
 
     const fetchAccountPost = async () => {
         try {
-            const response = await axios.get("http://localhost:5231/api/Tips/getAccountNamesFromTips")
-            setAccountPostNameList(response.data)
+            const response = await axios.get("http://localhost:5231/api/Tips/GetAllAccountIdsByRoles")
+            const cleanData = Object.fromEntries(
+                Object.entries(response.data).filter(([key]) => key !== "$id")
+            );
+            const cleanDataMap = new Map(
+                Object.entries(cleanData).map(([key, value]) => [Number(key), value])
+            );
+            setAccountPostNameList(cleanDataMap)
         } catch (err) { console.log(err) }
     }
 
@@ -128,12 +137,24 @@ function TipManagement() {
         try {
             Swal.fire({
                 title: `Delete ${name}?`,
-                text: "You won't be able to revert this!",
+                text: "Please provide a reason for deletion.",
                 icon: 'warning',
+                input: 'textarea',
+                inputPlaceholder: 'Enter the reason here...',
+                inputAttributes: {
+                    'aria-label': 'Enter the reason for deletion'
+                },
                 showCancelButton: true,
                 confirmButtonColor: '#3085d6',
                 cancelButtonColor: '#d33',
                 confirmButtonText: 'Yes, delete it!',
+                preConfirm: (reason) => {
+                    if (!reason) {
+                        Swal.showValidationMessage('Please enter a reason');
+                    }
+                    setDeleteReason(reason);
+                    return reason;
+                }
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     try {
@@ -198,6 +219,11 @@ function TipManagement() {
 
     const handleApprove = async () => {
         try {
+            if (selectedTip.length === 0) {
+                Swal.fire('No action needed', 'No tip is selected.', 'info');
+                return;
+            }
+
             const tipsToApprove = selectedTip.filter(tip => !tip.isApproved);
 
             if (tipsToApprove.length === 0) {
@@ -205,23 +231,45 @@ function TipManagement() {
                 return;
             }
 
-            const approveRequests = tipsToApprove.map(tip =>
-                axios.put(`http://localhost:5231/api/Tips/approve/${tip.idTip}`)
-            );
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'Do you want to approve the selected tips?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, approve them!',
+                cancelButtonText: 'No, cancel'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    const approveRequests = tipsToApprove.map(tip =>
+                        axios.put(`http://localhost:5231/api/Tips/approve/${tip.idTip}`)
+                    );
 
-            await Promise.all(approveRequests);
+                    await Promise.all(approveRequests);
 
-            Swal.fire('Success', 'Selected tips have been approved.', 'success');
-            reloadTips();
+                    Swal.fire('Approved!', 'Selected tips have been approved.', 'success');
+                    reloadTips();
+                }
+            });
         } catch (err) {
             console.log(err);
             Swal.fire('Error', 'Failed to approve tips. Please try again.', 'error');
         }
     };
 
+
+    const ApproveTip = async (idTip) => {
+
+    }
+
     const handleClear = () => {
         setSelectedTip([])
         setCheckedState(new Array(tips.length).fill(false));
+    }
+
+    const NavigateToTipPage = (idTip) => {
+        navigate(`/tips/${idTip}`)
     }
 
     return (
@@ -239,6 +287,7 @@ function TipManagement() {
                                 <th></th>
                                 <th style={{ width: "10%" }}>Name</th>
                                 <th>Description</th>
+                                <th>Account Posted</th>
                                 <th>Approved</th>
                                 <th>Status</th>
                                 <th>Actions</th>
@@ -247,16 +296,20 @@ function TipManagement() {
                         <tbody>
                             {tips.map((tip, index) => (
                                 <tr key={index}>
-                                    <td style={{ textAlign: "center" }} onClick={() => selectTips(index)}>
+                                    <td style={{ textAlign: "center", cursor: "pointer" }} onClick={() => selectTips(index)}>
                                         {checkedState[index] ? <FaCheck /> : <div></div>}
                                     </td>
-                                    <td style={{ cursor: "pointer" }}>
+                                    <td style={{ cursor: "pointer" }} onClick={() => NavigateToTipPage(tip.idTip)}>
                                         {tip.name}
                                     </td>
                                     <td className="price" style={{ textAlign: "left" }}>
-                                        {tip.decription && tip.decription.length > 250 ?
-                                            tip.decription.substring(0, 250) + "..." :
+                                        {tip.decription && tip.decription.length > 350 ?
+                                            tip.decription.substring(0, 350) + "..." :
                                             tip.decription || "No description available"}
+                                    </td>
+                                    <td>
+                                        {accountPostNameList.has(tip.idAccountPost) ?
+                                            accountPostNameList.get(tip.idAccountPost) : "Unknown Account"}
                                     </td>
                                     <td>
                                         {tip.isApproved ? "Approved" : "Not Approved"}
@@ -302,6 +355,7 @@ function TipManagement() {
                         </div>
                     </div>
                 )}
+
                 {addTipTable && (
                     <div className="edit-modal-overlay">
                         <div className="edit-modal">

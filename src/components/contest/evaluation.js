@@ -52,8 +52,8 @@ function Evaluation() {
             if (attendeesList.length > 0) {
                 setTimeout(() => {
                     $("#contestTable").DataTable({
-                        destroy: true,   
-                        pageLength: 5,   
+                        destroy: true,
+                        pageLength: 5,
                         lengthMenu: [5, 10],
                     });
                 }, 500);
@@ -61,7 +61,7 @@ function Evaluation() {
         } catch (err) {
             console.log(err);
         }
-    }, [attendeesList]); 
+    }, [attendeesList]);
 
     useThrottledResizeObserver(() => {
         if (attendeesList.length > 0) {
@@ -164,21 +164,32 @@ function Evaluation() {
     const handleSaveChanges = async () => {
         try {
             const markedAttendees = attendeesList.filter(attendee => attendee.mark && attendee.mark > 0);
-            console.log(markedAttendees)
             if (markedAttendees.length === 0) {
                 Swal.fire("Warning", "No marked comments to save.", "warning");
                 return;
             }
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'Do you want to save all the changes?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, save them!',
+                cancelButtonText: 'No, cancel'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    const promises = markedAttendees.map(attendee =>
+                        axios.put(`http://localhost:5231/api/Contest/updateMark/${attendee.idComment}`, {
+                            mark: attendee.mark
+                        })
+                    );
 
-            const promises = markedAttendees.map(attendee =>
-                axios.put(`http://localhost:5231/api/Contest/updateMark/${attendee.idComment}`, {
-                    mark: attendee.mark
-                })
-            );
+                    await Promise.all(promises);
 
-            await Promise.all(promises);
-
-            Swal.fire("Success", "Marks have been saved successfully!", "success");
+                    Swal.fire("Success", "Marks have been saved successfully!", "success");
+                }
+            });
         } catch (error) {
             console.error("Error saving marks:", error);
             Swal.fire("Error", "Failed to save marks. Please try again.", "error");
