@@ -154,3 +154,19 @@
 .compare-button:hover {
     background-color: #f89946;
 }
+
+.compare-button-2 {
+    background-color: #e67e22;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-top: 10px;
+    width: 150px;
+    height: 40px;
+}
+
+.compare-button-2:hover {
+    background-color: #f89946;
+}

@@ -12,13 +12,14 @@ import PasswordManagement from "./passwordManagement";
 const Management = () => {
   const location = useLocation();
   const { tokenInfor } = useContext(DataContext);
+  const storedTab = localStorage.getItem("managementTab");
 
   const { isProfile, isContest, isRecipe, isTip, isPassword } = location.state || {
-    isProfile: true,
-    isContest: false,
-    isRecipe: false,
-    isTip: false,
-    isPassword: false
+    isProfile: storedTab === "profile",
+    isContest: storedTab === "contest",
+    isRecipe: storedTab === "recipe",
+    isTip: storedTab === "tip",
+    isPassword: storedTab === "password"
   };
   const [contestStatus, setContestStatus] = useState(isContest);
   const [tipStatus, setTipStatus] = useState(isTip);
@@ -26,20 +27,34 @@ const Management = () => {
   const [profileStatus, setProfileStatus] = useState(isProfile);
   const [passwordStatus, setPasswordStatus] = useState(isPassword);
 
+
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isContest) {
-      handleChangeContest();
-    } else if (isRecipe) {
-      handleChangeRecipe();
-    } else if (isTip) {
+    if (storedTab === "tip") {
       handleChangeTip();
-    } else if (isProfile) {
+    } else if (storedTab === "contest") {
+      handleChangeContest();
+    } else if (storedTab === "recipe") {
+      handleChangeRecipe();
+    } else if (storedTab === "profile") {
       handleChangeProfile();
-    } else {
+    } else if (storedTab === "password") {
       handleChangePassword();
+    } else {
+      if (isContest) {
+        handleChangeContest();
+      } else if (isRecipe) {
+        handleChangeRecipe();
+      } else if (isTip) {
+        handleChangeTip();
+      } else if (isProfile) {
+        handleChangeProfile();
+      } else {
+        handleChangePassword();
+      }
     }
+    localStorage.removeItem("managementTab");
   }, [isProfile, isContest, isRecipe, isTip, isPassword]);
 
   const handleChangeContest = () => {

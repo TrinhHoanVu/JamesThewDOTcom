@@ -145,11 +145,11 @@ function ContestManagement() {
         }
     };
 
-    const handleDelete = async (contestId, status) => {
+    const handleDelete = async (contestId, status, name) => {
         try {
             if (status.toUpperCase() === "NOT YET") {
                 Swal.fire({
-                    title: 'Are you sure?',
+                    title: `Delete ${name}?`,
                     text: "You won't be able to revert this!",
                     icon: 'warning',
                     showCancelButton: true,
@@ -160,8 +160,10 @@ function ContestManagement() {
                     if (result.isConfirmed) {
                         try {
                             await axios.delete(`http://localhost:5231/api/Contest/delete/${contestId}`);
-                            Swal.fire('Deleted!', 'The contest has been deleted.', 'success');
-                            fetchContests();
+                            localStorage.setItem("managementTab", "contest");
+                            Swal.fire('Deleted!', 'The contest has been deleted.', 'success').then(() => {
+                                window.location.reload();
+                            });
                         } catch (err) {
                             Swal.fire('Error!', 'Failed to delete the contest. Please try again.', 'error');
                         }
@@ -252,7 +254,7 @@ function ContestManagement() {
                                                 />
                                                 <FaTrash
                                                     className="contest-action-icon delete-icon"
-                                                    onClick={() => handleDelete(contest.idContest, contest.status)}
+                                                    onClick={() => handleDelete(contest.idContest, contest.status, contest.name)}
                                                     title="Delete"
                                                     style={{ cursor: "pointer", marginLeft: "20px" }}
                                                 />
