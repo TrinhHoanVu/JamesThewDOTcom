@@ -7,11 +7,11 @@ import "datatables.net";
 import "../../css/management/tip-magenement.css";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import { FaPlus } from "react-icons/fa";
-import TipEditForm from "./tip-edit";
-import AddTip from "../tips/add-tip";
 import Swal from 'sweetalert2';
 import { FaCheck } from "react-icons/fa";
 import { FaTimes } from "react-icons/fa";
+import AddRecipe from "../recipes/add-recipe";
+import RecipeEditForm from "./recipe-edit"
 
 
 function useThrottledResizeObserver(callback, delay = 200) {
@@ -43,7 +43,7 @@ function useThrottledResizeObserver(callback, delay = 200) {
 }
 
 function RecipeManagement() {
-    const [tips, setTips] = useState([]);
+    const [recipes, setRecipes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [accountPostNameList, setAccountPostNameList] = useState(new Map());
@@ -51,14 +51,14 @@ function RecipeManagement() {
     const [idRecipe, setIdRecipe] = useState(0);
     const [addRecipeTable, setAddRecipeTable] = useState(false);
     const [checkedState, setCheckedState] = useState();
-    const [selectedTip, setSelectedTip] = useState([]);
+    const [selectedRecipe, setSelectedRecipe] = useState([]);
     const [deleteReason, setDeleteReason] = useState("");
 
     const navigate = useNavigate();
 
     useThrottledResizeObserver(() => {
         try {
-            if (tips.length > 0) {
+            if (recipes.length > 0) {
                 setTimeout(() => {
                     $("#contestTable").DataTable();
                 }, 500);
@@ -68,7 +68,7 @@ function RecipeManagement() {
 
     useEffect(() => {
         try {
-            if (tips.length > 0) {
+            if (recipes.length > 0) {
                 setTimeout(() => {
                     $("#contestTable").DataTable({
                         destroy: true,
@@ -77,22 +77,22 @@ function RecipeManagement() {
                     });
                 }, 500);
             }
-            setCheckedState(new Array(tips.length).fill(false));
+            setCheckedState(new Array(recipes.length).fill(false));
         } catch (err) {
             console.log(err);
         }
-    }, [tips]);
+    }, [recipes]);
 
     useEffect(() => {
         try {
-            fetchTips();
+            fetchRecipe();
             fetchAccountPost()
         } catch (err) { console.log(err) }
     }, []);
 
-    const fetchTips = async () => {
+    const fetchRecipe = async () => {
         try {
-            const response = await axios.get("http://localhost:5231/api/Tips/getAll");
+            const response = await axios.get("http://localhost:5231/api/Recipe/getAll");
             let contestData = response.data.data.$values || [];
 
             const objectMap = {};
@@ -107,7 +107,7 @@ function RecipeManagement() {
                 }
             });
 
-            setTips(contestData);
+            setRecipes(contestData);
             setLoading(false);
         } catch (err) {
             setError("Failed to load contests. Please try again.");
@@ -128,12 +128,12 @@ function RecipeManagement() {
         } catch (err) { console.log(err) }
     }
 
-    const handleEdit = (idTip) => {
+    const handleEdit = (idRecipe) => {
         setEditTable(true)
-        setIdRecipe(idTip)
+        setIdRecipe(idRecipe)
     }
 
-    const handleDelete = (idTip, name) => {
+    const handleDelete = (idRecipe, name, idAccountPost) => {
         try {
             Swal.fire({
                 title: `Delete ${name}?`,
@@ -152,17 +152,42 @@ function RecipeManagement() {
                     if (!reason) {
                         Swal.showValidationMessage('Please enter a reason');
                     }
-                    setDeleteReason(reason);
                     return reason;
                 }
             }).then(async (result) => {
                 if (result.isConfirmed) {
+                    const deleteReason = result.value;
+
                     try {
-                        await axios.delete(`http://localhost:5231/api/Tips/delete/${idTip}`);
-                        localStorage.setItem("managementTab", "tip");
-                        Swal.fire('Deleted!', 'The contest has been deleted.', 'success').then(() => {
-                            window.location.reload();
+                        Swal.fire({
+                            title: 'Deleting...',
+                            text: 'Please wait while the recipe is being deleted.',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
                         });
+                        const response = await axios.get(`http://localhost:5231/api/Account/getEmailAccount/${idAccountPost}`)
+
+                        await axios.delete(`http://localhost:5231/api/Recipe/delete/${idRecipe}`);
+
+                        let subject = "Your recipe has been deleted!!!"
+                        let body = `Hi there. We announce that your recipe has been rejected since ${deleteReason}`
+
+                        await axios.post("http://localhost:5231/api/Contest/sendNewContest", {
+                            To: response.data,
+                            subject: subject,
+                            Body: body
+                        })
+
+                        localStorage.setItem("managementTab", "tip");
+                        Swal.fire({
+                            title: 'Deleted!',
+                            text: 'The recipe has been deleted.',
+                            icon: 'success'
+                        }).then(() => {
+                            window.location.reload();
+                        })
                     } catch (err) {
                         Swal.fire('Error!', 'Failed to delete the contest. Please try again.', 'error');
                     }
@@ -173,99 +198,25 @@ function RecipeManagement() {
         }
     }
 
-    const handleAddTip = () => {
+    const handleAddRecipe = () => {
         try {
             setAddRecipeTable(true)
         } catch (err) { console.log(err) }
     }
 
-    const reloadTips = async () => {
+    const reloadRecipes = async () => {
         try {
-            await fetchTips();
+            await fetchRecipe();
         } catch (er) { console.log(er) }
     };
 
-    const selectTips = (index) => {
-        try {
-            setCheckedState((prevState) => {
-                const updatedState = [...prevState];
-                updatedState[index] = !prevState[index];
-                return updatedState;
-            });
-
-            setSelectedTip((prevSelectedTips) => {
-                let updatedTips;
-
-
-                const isTipSelected = prevSelectedTips.some(tip => tip.name === tips[index].name);
-
-                if (isTipSelected) {
-                    updatedTips = prevSelectedTips.filter(tip => tip.name !== tips[index].name);
-                } else {
-                    updatedTips = [...prevSelectedTips, tips[index]];
-                    if (updatedTips.length > 3) updatedTips = updatedTips.slice(1);
-                }
-
-                if (updatedTips.length === 0) {
-                    setAddRecipeTable(false);
-                }
-
-                return updatedTips;
-            });
-        } catch (err) {
-            console.log(err);
-        }
-    };
-
-    const handleApprove = async () => {
-        try {
-            if (selectedTip.length === 0) {
-                Swal.fire('No action needed', 'No tip is selected.', 'info');
-                return;
-            }
-
-            const tipsToApprove = selectedTip.filter(tip => !tip.isApproved);
-
-            if (tipsToApprove.length === 0) {
-                Swal.fire('No action needed', 'All selected tips are already approved.', 'info');
-                return;
-            }
-
-            Swal.fire({
-                title: 'Are you sure?',
-                text: 'Do you want to approve the selected tips?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, approve them!',
-                cancelButtonText: 'No, cancel'
-            }).then(async (result) => {
-                if (result.isConfirmed) {
-                    const approveRequests = tipsToApprove.map(tip =>
-                        axios.put(`http://localhost:5231/api/Tips/approve/${tip.idTip}`)
-                    );
-
-                    await Promise.all(approveRequests);
-
-                    Swal.fire('Approved!', 'Selected tips have been approved.', 'success');
-                    reloadTips();
-                }
-            });
-        } catch (err) {
-            console.log(err);
-            Swal.fire('Error', 'Failed to approve tips. Please try again.', 'error');
-        }
-    };
-
-
     const handleClear = () => {
-        setSelectedTip([])
-        setCheckedState(new Array(tips.length).fill(false));
+        setSelectedRecipe([])
+        setCheckedState(new Array(recipes.length).fill(false));
     }
 
-    const NavigateToTipPage = (idTip) => {
-        navigate(`/tips/${idTip}`)
+    const NavigateToApprovelPage = (idRecipe) => {
+        navigate(`/recipe/approval`)
     }
 
     return (
@@ -280,50 +231,37 @@ function RecipeManagement() {
                     <table id="contestTable" className="display" style={{ backgroundColor: "transparent" }}>
                         <thead>
                             <tr>
-                                <th></th>
                                 <th style={{ width: "10%" }}>Name</th>
                                 <th>Description</th>
-                                <th>Account Posted</th>
                                 <th>Approved</th>
-                                <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {tips.map((tip, index) => (
+                            {recipes.map((recipe, index) => (
                                 <tr key={index}>
-                                    <td style={{ textAlign: "center", cursor: "pointer" }} onClick={() => selectTips(index)}>
-                                        {checkedState[index] ? <FaCheck /> : <div></div>}
-                                    </td>
-                                    <td style={{ cursor: "pointer" }} onClick={() => NavigateToTipPage(tip.idTip)}>
-                                        {tip.name}
+                                    <td>
+                                        {recipe.name}
                                     </td>
                                     <td className="price" style={{ textAlign: "left" }}>
-                                        {tip.decription && tip.decription.length > 350 ?
-                                            tip.decription.substring(0, 350) + "..." :
-                                            tip.decription || "No description available"}
+                                        {recipe.description && recipe.description.length > 350 ?
+                                            recipe.description.substring(0, 350) + "..." :
+                                            recipe.description || "No description available"}
                                     </td>
                                     <td>
-                                        {accountPostNameList.has(tip.idAccountPost) ?
-                                            accountPostNameList.get(tip.idAccountPost) : "Unknown Account"}
-                                    </td>
-                                    <td>
-                                        {tip.isApproved ? "Approved" : "Not Approved"}
-                                    </td>
-                                    <td style={{ cursor: "pointer", textAlign: "right" }}>
-                                        {tip.isPublic ? "Public" : "Private"}
+                                        {recipe.isApproved ? "Approved" : "Not Approved"}
                                     </td>
                                     <td className="actions">
                                         <>
-                                            <FaEdit
+                                            {accountPostNameList.get(recipe.idAccountPost) !== "USER" && <FaEdit
                                                 className="contest-action-icon edit-icon"
-                                                onClick={() => handleEdit(tip.idTip)}
+                                                onClick={() => handleEdit(recipe.idRecipe)}
                                                 title="Edit"
                                                 style={{ cursor: "pointer" }}
-                                            />
+                                            />}
                                             <FaTrash
                                                 className="contest-action-icon delete-icon"
-                                                onClick={() => handleDelete(tip.idTip, tip.name)}
+                                                onClick={() => handleDelete(recipe.idRecipe, recipe.name, recipe.idAccountPost)}
                                                 title="Delete"
                                                 style={{ cursor: "pointer", marginLeft: "20px" }}
                                             />
@@ -336,15 +274,15 @@ function RecipeManagement() {
                 )}
 
                 <div style={{ display: "flex", flexDirection: "row", gap: "10px" }}>
-                    <button className="compare-button" onClick={() => handleAddTip()}><FaPlus /> Add</button>
-                    <button className="compare-button" onClick={() => handleApprove()}><FaCheck /> Approve</button>
+                    <button className="compare-button" onClick={() => handleAddRecipe()}><FaPlus /> Add</button>
+                    <button className="compare-button" onClick={() => NavigateToApprovelPage()}><FaCheck /> Approve</button>
                     <button className="compare-button" onClick={() => handleClear()}><FaTimes /> Clear</button>
                 </div>
 
                 {editTable && (
                     <div className="edit-modal-overlay">
                         <div className="edit-modal">
-                            <TipEditForm idTip={idRecipe} onClose={() => setEditTable(false)} reloadTips={reloadTips} />
+                            <RecipeEditForm idRecipe={idRecipe} onClose={() => setEditTable(false)} reloadRecipes={reloadRecipes} />
                             <button className="close-modal-button" onClick={() => setEditTable(false)}>
                                 Close
                             </button>
@@ -355,7 +293,7 @@ function RecipeManagement() {
                 {addRecipeTable && (
                     <div className="edit-modal-overlay">
                         <div className="edit-modal">
-                            <AddTip onClose={() => setAddRecipeTable(false)} reloadTips={reloadTips} IsApproved={true} />
+                            <AddRecipe onClose={() => setAddRecipeTable(false)} reloadRecipes={reloadRecipes} IsApproved={true} />
                             <button className="close-modal-button" onClick={() => setAddRecipeTable(false)}>
                                 Close
                             </button>

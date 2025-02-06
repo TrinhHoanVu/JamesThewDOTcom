@@ -12,6 +12,8 @@ import ContestPage from "../components/contest/contest-page"
 import Evaluation from "../components/contest/evaluation"
 import TipsPage from "../components/tips/tips-page"
 import TipDetail from "../components/tips/tip-detail"
+import RecipesPage from "../components/recipes/recipes-page"
+import Approval from "../components/recipes/approval"
 
 const publicRouter = [
     {
@@ -57,6 +59,14 @@ const publicRouter = [
     {
         path: "/tips/:id",
         element: <TipDetail />
+    },
+    {
+        path: "/recipes",
+        element: <RecipesPage />
+    },
+    {
+        path: "/recipes/:id",
+        element: <TipDetail />
     }
 ]
 
@@ -79,6 +89,11 @@ const evaluateRouter = [
     {
         path: "/contest/evaluation/:contestId",
         element: <Evaluation />,
+        roles: ["ADMIN", "SUPERADMIN"]
+    },
+    {
+        path: "/recipe/approval",
+        element: <Approval />,
         roles: ["ADMIN", "SUPERADMIN"]
     }
 ]

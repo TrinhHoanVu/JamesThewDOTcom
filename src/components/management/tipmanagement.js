@@ -339,12 +339,12 @@ function TipManagement() {
                                     </td>
                                     <td className="actions">
                                         <>
-                                            <FaEdit
+                                            {accountPostNameList.get(tip.idAccountPost) !== "USER" && <FaEdit
                                                 className="contest-action-icon edit-icon"
                                                 onClick={() => handleEdit(tip.idTip)}
                                                 title="Edit"
                                                 style={{ cursor: "pointer" }}
-                                            />
+                                            />}
                                             <FaTrash
                                                 className="contest-action-icon delete-icon"
                                                 onClick={() => handleDelete(tip.idTip, tip.name, tip.idAccountPost)}

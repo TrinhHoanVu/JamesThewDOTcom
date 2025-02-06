@@ -165,7 +165,7 @@ function AddContest({ onClose, reloadContests }) {
                 const descriptionText = description.getCurrentContent().getPlainText();
                 setLoadingPost(true)
                 await axios.post("http://localhost:5231/api/Contest/addContest", {
-                    Name: name,
+                    Name: name.trim(),
                     StartDate: startDate,
                     EndDate: endDate,
                     Description: descriptionText,
