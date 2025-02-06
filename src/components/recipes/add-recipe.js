@@ -4,8 +4,9 @@ import "draft-js/dist/Draft.css";
 import axios from "axios";
 import Swal from 'sweetalert2';
 import { DataContext } from "../../context/DatabaseContext";
+import IngredientCard from "./ingredient-card";
 
-function AddRecipe({ onClose, reloadTips, IsApproved, title = 'Add tip successfully!' }) {
+function AddRecipe({ onClose, reloadTips, IsApproved, title = 'Add recipe successfully!' }) {
     const [name, setName] = useState("");
     const [description, setDescription] = useState(() => EditorState.createEmpty());
     const [recipeNameList, setRecipeNameList] = useState([]);
@@ -13,7 +14,8 @@ function AddRecipe({ onClose, reloadTips, IsApproved, title = 'Add tip successfu
     const [isPublic, setIsPublic] = useState(true);
     const [initialIngredients, setInitialIngredients] = useState([]);
     const [ingredients, setIngredients] = useState([]);
-
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [selectedIngredients, setSelectedIngredients] = useState([]);
 
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(true);
@@ -57,10 +59,19 @@ function AddRecipe({ onClose, reloadTips, IsApproved, title = 'Add tip successfu
 
             setInitialIngredients(resonse.data.$values)
             setIngredients(resonse.data.$values)
-            console.log(initialIngredients)
+            console.log("asdsad" + initialIngredients)
             console.log(ingredients)
         } catch (err) { console.log(err) }
     }
+
+    const handleIngredientSelect = (ingredient) => {
+        try {
+            if (!selectedIngredients.includes(ingredient)) {
+                setSelectedIngredients([...selectedIngredients, ingredient]);
+            }
+            setShowDropdown(false);
+        } catch (err) { console.log(err) }
+    };
 
     const validate = () => {
         const errors = {};
@@ -124,11 +135,15 @@ function AddRecipe({ onClose, reloadTips, IsApproved, title = 'Add tip successfu
         } catch (er) { console.log(er) }
     };
 
+    const handleIngredientRemove = (ingredient) => {
+        setSelectedIngredients(selectedIngredients.filter((item) => item !== ingredient));
+    };
+
     if (loading) return <p>Loading...</p>;
 
     return (
         <div style={{
-            maxWidth: "1000px", minWidth: "1000px", margin: "0 auto", padding: "10px", display: "flex",
+            width: "1000px", margin: "0 auto", padding: "10px", display: "flex",
             justifyContent: "center", gap: "20px"
         }}>
             <div style={{ width: "500px" }}>
@@ -156,16 +171,27 @@ function AddRecipe({ onClose, reloadTips, IsApproved, title = 'Add tip successfu
                     </select>
                 </div>
                 <div style={{ marginBottom: "45px", height: "50px" }}>
-                    <label htmlFor="status">Status:</label>
-                    <select
-                        id="status"
-                        value={isPublic ? "true" : "false"}
-                        onChange={(e) => setIsPublic(e.target.value === "true")}
-                        style={{ width: "100%", padding: "8px", margin: "5px 0" }}
-                    >
-                        <option value="true">Public</option>
-                        <option value="false">Private</option>
-                    </select>
+                    <label htmlFor="status">Ingredients:</label>
+                    <div className="ingredient-card-wrapper">
+                        {selectedIngredients.length > 0 ? (
+                            selectedIngredients.map((ingredient, index) => (
+                                <IngredientCard key={index} name={ingredient} handleIngredientRemove={handleIngredientRemove} />
+                            ))
+                        ) : ""}
+                    </div>
+                    <br />
+                    <div onClick={() => setShowDropdown(!showDropdown)} style={{ border: "1px solid #ccc", padding: "10px", cursor: "pointer" }}>
+                        {selectedIngredients.length > 0 ? selectedIngredients.join(", ") : "Select ingredients"}
+                    </div>
+                    {showDropdown && (
+                        <div style={{ border: "1px solid #ccc", maxHeight: "110px", overflowY: "auto" }}>
+                            {ingredients.map((ingredient, index) => (
+                                <div key={index} onClick={() => handleIngredientSelect(ingredient)} style={{ padding: "5px", cursor: "pointer" }}>
+                                    {ingredient}
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
             <div style={{
@@ -176,7 +202,7 @@ function AddRecipe({ onClose, reloadTips, IsApproved, title = 'Add tip successfu
                 </label>
                 <div style={{
                     border: "1px solid #ddd",
-                    height: "250px",
+                    height: "340px",
                     padding: "10px",
                     width: "500px",
                     overflow: "auto",
