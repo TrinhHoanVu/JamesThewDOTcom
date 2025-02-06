@@ -5,12 +5,15 @@ import axios from "axios";
 import Swal from 'sweetalert2';
 import { DataContext } from "../../context/DatabaseContext";
 
-function AddTip({ onClose, reloadTips, IsApproved, title = 'Add tip successfully!' }) {
+function AddRecipe({ onClose, reloadTips, IsApproved, title = 'Add tip successfully!' }) {
     const [name, setName] = useState("");
     const [description, setDescription] = useState(() => EditorState.createEmpty());
-    const [tipNameList, setTipNameList] = useState([]);
+    const [recipeNameList, setRecipeNameList] = useState([]);
     const { tokenInfor } = useContext(DataContext);
     const [isPublic, setIsPublic] = useState(true);
+    const [initialIngredients, setInitialIngredients] = useState([]);
+    const [ingredients, setIngredients] = useState([]);
+
 
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(true);
@@ -21,20 +24,19 @@ function AddTip({ onClose, reloadTips, IsApproved, title = 'Add tip successfully
     const editorRef = useRef();
 
     const focus = () => {
-        try {
-            editorRef.current.focus();
-        } catch (er) { console.log(er) }
+        editorRef.current.focus();
     };
 
     useEffect(() => {
         fetchCurrentAdmin()
-        fetchContestNames()
+        fetchRecipeNames()
+        fetchIngredients()
     }, [])
 
-    const fetchContestNames = async () => {
+    const fetchRecipeNames = async () => {
         try {
-            const response = await axios.get("http://localhost:5231/api/Tips/getAllTipNames")
-            setTipNameList(response.data.$values)
+            const response = await axios.get("http://localhost:5231/api/Recipe/getAllRecipeNames")
+            setRecipeNameList(response.data.$values)
         } catch (err) { console.log(err) }
     }
 
@@ -49,12 +51,23 @@ function AddTip({ onClose, reloadTips, IsApproved, title = 'Add tip successfully
         }
     }
 
+    const fetchIngredients = async () => {
+        try {
+            const resonse = await axios.get("http://localhost:5231/api/Recipe/getAllIngredientNames")
+
+            setInitialIngredients(resonse.data.$values)
+            setIngredients(resonse.data.$values)
+            console.log(initialIngredients)
+            console.log(ingredients)
+        } catch (err) { console.log(err) }
+    }
+
     const validate = () => {
         const errors = {};
         try {
-            console.log(tipNameList)
+            console.log(recipeNameList)
             if (!name.trim()) errors.name = "Name is required.";
-            if (tipNameList.includes(name)) errors.name = "This name has already taken.";
+            if (recipeNameList.includes(name)) errors.name = "This name has already taken.";
             if (!description.getCurrentContent().hasText()) errors.description = "Description is required.";
         } catch (err) { console.log(err) }
         return errors;
@@ -75,8 +88,8 @@ function AddTip({ onClose, reloadTips, IsApproved, title = 'Add tip successfully
             try {
                 const descriptionText = description.getCurrentContent().getPlainText();
                 setLoadingPost(true)
-                await axios.post("http://localhost:5231/api/Tips/addTip", {
-                    Name: name,
+                await axios.post("http://localhost:5231/api/Recipe/addRecipe", {
+                    Name: name.trim(),
                     Description: descriptionText,
                     IsPublic: isPublic,
                     IsApproved: IsApproved,
@@ -84,7 +97,7 @@ function AddTip({ onClose, reloadTips, IsApproved, title = 'Add tip successfully
                 })
 
                 setLoadingPost(false)
-                localStorage.setItem("managementTab", "tip");
+                localStorage.setItem("managementTab", "recipe");
                 Swal.fire({
                     icon: 'success',
                     title: title,
@@ -103,7 +116,7 @@ function AddTip({ onClose, reloadTips, IsApproved, title = 'Add tip successfully
             } catch (err) {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Failed to add Tip',
+                    title: 'Failed to add Recipe',
                     text: 'Please try again later.',
                 });
 
@@ -142,39 +155,50 @@ function AddTip({ onClose, reloadTips, IsApproved, title = 'Add tip successfully
                         <option value="false">Private</option>
                     </select>
                 </div>
-
-                <div style={{
-                    marginBottom: "15px", display: "flex",
-                    justifyContent: "center", flexDirection: "column", gap: "20px"
-                }}>
-                    <label htmlFor="description">Description: {errors.description && <span style={{ color: "red" }}>{errors.description}</span>}
-                    </label>
-                    <div style={{
-                        border: "1px solid #ddd",
-                        height: "250px",
-                        padding: "10px",
-                        width: "500px",
-                        overflow: "auto",
-                        backgroundColor: "#fff"
-                    }} onClick={focus}>
-                        <Editor
-                            ref={editorRef}
-                            editorState={description}
-                            onChange={(editorState) => setDescription(editorState)}
-                        />
-                    </div>
-
-                    <button
-                        onClick={handleSave}
-                        style={{ padding: "10px 20px", backgroundColor: "#ffc107", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}
+                <div style={{ marginBottom: "45px", height: "50px" }}>
+                    <label htmlFor="status">Status:</label>
+                    <select
+                        id="status"
+                        value={isPublic ? "true" : "false"}
+                        onChange={(e) => setIsPublic(e.target.value === "true")}
+                        style={{ width: "100%", padding: "8px", margin: "5px 0" }}
                     >
-                        Save
-                    </button>
-                    {loadingPost && <div style={{ marginTop: "10px", color: "blue" }}>Saving contest, please wait...</div>}
+                        <option value="true">Public</option>
+                        <option value="false">Private</option>
+                    </select>
                 </div>
+            </div>
+            <div style={{
+                marginBottom: "15px", display: "flex",
+                justifyContent: "center", flexDirection: "column", gap: "20px"
+            }}>
+                <label htmlFor="description">Description: {errors.description && <span style={{ color: "red" }}>{errors.description}</span>}
+                </label>
+                <div style={{
+                    border: "1px solid #ddd",
+                    height: "250px",
+                    padding: "10px",
+                    width: "500px",
+                    overflow: "auto",
+                    backgroundColor: "#fff"
+                }} onClick={focus}>
+                    <Editor
+                        ref={editorRef}
+                        editorState={description}
+                        onChange={(editorState) => setDescription(editorState)}
+                    />
+                </div>
+
+                <button
+                    onClick={handleSave}
+                    style={{ padding: "10px 20px", backgroundColor: "#ffc107", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}
+                >
+                    Save
+                </button>
+                {loadingPost && <div style={{ marginTop: "10px", color: "blue" }}>Saving contest, please wait...</div>}
             </div>
         </div>
     );
 }
 
-export default AddTip;
+export default AddRecipe;
