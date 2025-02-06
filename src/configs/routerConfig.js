@@ -14,6 +14,7 @@ import TipsPage from "../components/tips/tips-page"
 import TipDetail from "../components/tips/tip-detail"
 import RecipesPage from "../components/recipes/recipes-page"
 import Approval from "../components/recipes/approval"
+import AddRecipe from "../components/recipes/add-recipe"
 
 const publicRouter = [
     {
@@ -77,6 +78,11 @@ const privateRouter = [
         element: <Management defaultTab="profile" />,
         roles: ["ADMIN", "SUPERADMIN", "USER"],
         status: true
+    },
+    {
+        path: "/recipe/add",
+        element: <AddRecipe/>,
+        roles: ["ADMIN", "SUPERADMIN"],
     }
 ]
 

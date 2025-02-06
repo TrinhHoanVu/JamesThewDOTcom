@@ -48,7 +48,7 @@ function RecipeManagement() {
     const [error, setError] = useState(null);
     const [accountPostNameList, setAccountPostNameList] = useState(new Map());
     const [editTable, setEditTable] = useState(false);
-    const [idRecipe, setIdRecipe] = useState(0);
+    const [idChoosenRecipe, setIdChoosenRecipe] = useState(0);
     const [addRecipeTable, setAddRecipeTable] = useState(false);
     const [checkedState, setCheckedState] = useState();
     const [selectedRecipe, setSelectedRecipe] = useState([]);
@@ -72,8 +72,8 @@ function RecipeManagement() {
                 setTimeout(() => {
                     $("#contestTable").DataTable({
                         destroy: true,
-                        pageLength: 5,
-                        lengthMenu: [5, 10],
+                        pageLength: 4,
+                        lengthMenu: [4],
                     });
                 }, 500);
             }
@@ -130,7 +130,8 @@ function RecipeManagement() {
 
     const handleEdit = (idRecipe) => {
         setEditTable(true)
-        setIdRecipe(idRecipe)
+        setIdChoosenRecipe(idRecipe)
+        console.log(idChoosenRecipe)
     }
 
     const handleDelete = (idRecipe, name, idAccountPost) => {
@@ -200,7 +201,7 @@ function RecipeManagement() {
 
     const handleAddRecipe = () => {
         try {
-            setAddRecipeTable(true)
+            navigate("/recipe/add")
         } catch (err) { console.log(err) }
     }
 
@@ -215,7 +216,7 @@ function RecipeManagement() {
         setCheckedState(new Array(recipes.length).fill(false));
     }
 
-    const NavigateToApprovelPage = (idRecipe) => {
+    const NavigateToApprovelPage = () => {
         navigate(`/recipe/approval`)
     }
 
@@ -282,19 +283,8 @@ function RecipeManagement() {
                 {editTable && (
                     <div className="edit-modal-overlay">
                         <div className="edit-modal">
-                            <RecipeEditForm idRecipe={idRecipe} onClose={() => setEditTable(false)} reloadRecipes={reloadRecipes} />
+                            <RecipeEditForm idRecipe={idChoosenRecipe} onClose={() => setEditTable(false)} reloadRecipes={reloadRecipes} />
                             <button className="close-modal-button" onClick={() => setEditTable(false)}>
-                                Close
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {addRecipeTable && (
-                    <div className="edit-modal-overlay">
-                        <div className="edit-modal">
-                            <AddRecipe onClose={() => setAddRecipeTable(false)} reloadRecipes={reloadRecipes} IsApproved={true} />
-                            <button className="close-modal-button" onClick={() => setAddRecipeTable(false)}>
                                 Close
                             </button>
                         </div>

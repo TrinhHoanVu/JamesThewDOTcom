@@ -24,7 +24,7 @@ body {
   min-width: 1000px;
 }
 
-.title {
+.profile-title {
   font-size: 2rem;
   margin-bottom: 10px;
   color: #e67e22;
@@ -41,13 +41,13 @@ body {
   text-align: left;
 }
 
-label {
+.profile-page-label {
   display: block;
   font-weight: bold;
   color: #34495e;
 }
 
-input,
+.profile-page-input,
 .custom-row .form-select {
   width: 100%;
   padding: 8px 10px;
@@ -61,14 +61,14 @@ input,
   box-shadow: none;
 }
 
-input:focus,
+.profile-page-input:focus,
 .custom-row .form-select:focus {
   border-color: #e67e22;
   outline: none;
   box-shadow: 0 0 5px rgba(230, 126, 34, 0.5);
 }
 
-input:hover,
+.profile-page-input:hover,
 .custom-row .form-select:hover {
   border-color: #888;
 }
@@ -81,13 +81,13 @@ input:hover,
 }
 
 .custom-row .form-select,
-.custom-row input {
+.custom-row .profile-page-input {
   flex: none;
   width: 50%;
   width: 250px;
 }
 
-input {
+.profile-page-input {
   width: 100%;
   padding: 10px;
   margin-top: 5px;
@@ -154,6 +154,6 @@ input {
   cursor: pointer;
 }
 
-.container{
+.selectedbox-container {
   margin-top: 15px;
 }
