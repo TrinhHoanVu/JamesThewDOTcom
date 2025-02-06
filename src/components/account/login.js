@@ -27,7 +27,7 @@ const Login = () => {
             console.log("tokenDecode: ", tokenDecode);
             setTokenInfor(tokenDecode)
             const allowedRoles = ["SUPERADMIN", "ADMIN"];
-            
+
             if (allowedRoles.includes(tokenDecode.role)) {
               if (from === "/") {
                 navigate("/management", { state: { isProfile: true, isContest: false, isRecipe: false, isTip: false } });
@@ -48,7 +48,6 @@ const Login = () => {
       console.log(error)
     }
   }
-  
 
   return (
     <div className="login-container">
@@ -57,21 +56,23 @@ const Login = () => {
         <p className="subtitle">Welcome to JamesThew's Kitchen!</p>
         <form onSubmit={handleLogin}>
           <div className="form-group">
-            <label>Email:</label>
+            <label className="loginpage-labal-title">Email:</label>
             <input
               type="text"
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              className="loginpage-input"
             />
           </div>
           <div className="form-group">
-            <label>Password:</label>
+            <label className="loginpage-labal-title">Password:</label>
             <input
               type="password"
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              className="loginpage-input"
             />
           </div>
           {errorMessage && <p className="message">{errorMessage}</p>}

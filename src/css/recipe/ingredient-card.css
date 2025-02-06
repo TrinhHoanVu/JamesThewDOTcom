@@ -28,8 +28,19 @@
     flex-wrap: wrap;
     gap: 5px;
     justify-content: flex-start;
-    min-height: 1px;
-    max-height: 100px;
+    min-height: 10px;
+    max-height: 150px;
     overflow: hidden;
     overflow-y: auto;
+    margin-top: 10px;
+}
+
+.add-ingredient-table {
+    border: none;
+    border-bottom: 2px solid black;
+    outline: none;
+    transition: border-bottom 0.3s ease-in-out;
+    border-radius: 0;
+    background-color: transparent;
+    width: 50%;
 }

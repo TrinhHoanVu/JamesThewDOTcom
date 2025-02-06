@@ -45,13 +45,14 @@ const VerifyCode = () => {
                 <h1>Verify Code</h1>
                 <form onSubmit={handleVerifyCode}>
                     <div className="form-group">
-                        <label>Enter Verification Code:</label>
+                        <label className="verifycode-page-title">Enter Verification Code:</label>
                         <input
                             type="text"
                             placeholder="Enter the code sent to your email"
                             value={verificationCode}
                             onChange={(e) => setVerificationCode(e.target.value)}
                             required
+                            className="verifycode-page-input"
                         />
                     </div>
                     <span className="notiMessageConfirm">We have sent a verification code to your email. This code is valid for 2 minutes</span>

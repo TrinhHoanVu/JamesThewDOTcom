@@ -244,7 +244,8 @@ function ContestEditForm({ idContest, onClose, reloadContests }) {
                         id="name"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        style={{ width: "100%", padding: "8px", margin: "5px 0" }}
+                        style={{ width: "95.9%", padding: "8px", margin: "5px 0" }}
+                        className="contest-edit-input"
                     />
                     {errors.name && <span style={{ color: "red" }}>{errors.name}</span>}
                 </div>
@@ -256,7 +257,8 @@ function ContestEditForm({ idContest, onClose, reloadContests }) {
                         id="price"
                         value={price}
                         onChange={(e) => setPrice(parseFloat(e.target.value) || 0)}
-                        style={{ width: "100%", padding: "8px", margin: "5px 0" }}
+                        style={{ width: "95.9%", padding: "8px", margin: "5px 0" }}
+                        className="contest-edit-input"
                     />
                     {errors.price && <span style={{ color: "red" }}>{errors.price}</span>}
                 </div>
@@ -269,7 +271,8 @@ function ContestEditForm({ idContest, onClose, reloadContests }) {
                         value={formatDate(startDate)}
                         onChange={status !== "HAPPENING" ? (e) => handleStartDateChange(e.target.value) : undefined}
                         readOnly={status === "HAPPENING"}
-                        style={{ width: "100%", padding: "8px", margin: "5px 0" }}
+                        style={{ width: "95.9%", padding: "8px", margin: "5px 0" }}
+                        className="contest-edit-input"
                     />
                     {errors.startDate && <span style={{ color: "red" }}>{errors.startDate}</span>}
                 </div>
@@ -281,7 +284,8 @@ function ContestEditForm({ idContest, onClose, reloadContests }) {
                         id="endDate"
                         value={formatDate(endDate)}
                         onChange={(e) => handleEndDateChange(e.target.value)}
-                        style={{ width: "100%", padding: "8px", margin: "5px 0" }}
+                        style={{ width: "95.9%", padding: "8px", margin: "5px 0" }}
+                        className="contest-edit-input"
                     />
                     {errors.endDate && <span style={{ color: "red" }}>{errors.endDate}</span>}
                 </div>
@@ -293,6 +297,7 @@ function ContestEditForm({ idContest, onClose, reloadContests }) {
                         value={status}
                         onChange={(e) => setStatus(e.target.value)}
                         style={{ width: "100%", padding: "8px", margin: "5px 0" }}
+                        className="contest-edit-input"
                     >
                         <option value="NOT YET">NOT YET</option>
                         <option value="HAPPENING">HAPPENING</option>

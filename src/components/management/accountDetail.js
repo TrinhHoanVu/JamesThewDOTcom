@@ -200,22 +200,23 @@ function AccountDetail() {
     }
     return (
         <div className="profile-container">
-            <div className="profile-box">
-                <h1 className="title">Account Profile</h1>
+            <div className="profile-box" style={{ marginTop: "50px" }}>
+                <h1 className="profile-title">Account Profile</h1>
                 <p className="subtitle">Manage your account information</p>
                 <form onSubmit={handleUpdateProfile}>
                     <div className="form-group">
-                        <label htmlFor="email">Email</label>
+                        <label htmlFor="email" className="profile-page-label">Email</label>
                         <input
                             type="email"
                             id="email"
                             name="email"
                             readOnly
                             value={tokenInfor.email}
+                            className="profile-page-input"
                         />
                     </div>
                     <div className="form-group">
-                        <label htmlFor="name">Name</label>
+                        <label htmlFor="name" className="profile-page-label">Name</label>
                         <input
                             type="text"
                             id="name"
@@ -223,10 +224,11 @@ function AccountDetail() {
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder="Enter your name"
+                            className="profile-page-input"
                         />
                     </div>
                     <div className="form-group">
-                        <label htmlFor="phone">Phone Number</label>
+                        <label htmlFor="phone" className="profile-page-label">Phone Number</label>
                         <input
                             type="text"
                             id="phone"
@@ -238,11 +240,12 @@ function AccountDetail() {
                                     setPhoneNumber(value);
                                 }
                             }}
+                            className="profile-page-input"
                             placeholder="Enter your phone number"
                         />
                     </div>
                     <div className="form-group">
-                        <label htmlFor="address">Address</label>
+                        <label htmlFor="address" className="profile-page-label">Address</label>
                         <input
                             type="text"
                             id="address"
@@ -251,9 +254,10 @@ function AccountDetail() {
                             placeholder="Enter your address"
                             onClick={handleChangeAddress}
                             onChange={handleUpdateAddress}
+                            className="profile-page-input"
                         />
 
-                        {showSelectBoxes && (<div className="container">
+                        {showSelectBoxes && (<div className="selectedbox-container">
                             <div className="row custom-row">
                                 <select
                                     className="form-select"
@@ -317,13 +321,14 @@ function AccountDetail() {
                         </div>)}
                     </div>
                     {isUser === 'USER' && (<div className="form-group">
-                        <label htmlFor="expiredDay">Expired Day</label>
+                        <label htmlFor="expiredDay" className="profile-page-label">Expired Day</label>
                         {expiredDay ? <input
                             type="text"
                             readOnly
                             id="expiredDay"
                             name="expiredDay"
                             value={formattedExpiredDay}
+                            className="profile-page-input"
                         /> : <div> <br />
                             Your account has not enabled yet. Click
                             <span style={{ color: "orange", cursor: "pointer" }} onClick={() => handlePayment()} > here</span> to pay.

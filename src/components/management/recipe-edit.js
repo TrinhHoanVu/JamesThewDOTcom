@@ -4,7 +4,7 @@ import "draft-js/dist/Draft.css";
 import axios from "axios";
 import Swal from 'sweetalert2';
 
-function RecipeEditForm({ idTip, onClose, reloadTips }) {
+function RecipeEditForm({ idRecipe, onClose, reloadTips }) {
     const [name, setName] = useState("");
     const [description, setDescription] = useState(() => EditorState.createEmpty());
     const [isPublic, setIsPublic] = useState(true);
@@ -24,7 +24,7 @@ function RecipeEditForm({ idTip, onClose, reloadTips }) {
 
     const fetchTip = async () => {
         try {
-            const response = await axios.get(`http://localhost:5231/api/Recipe/detail/${idTip}`);
+            const response = await axios.get(`http://localhost:5231/api/Recipe/detail/${idRecipe}`);
             const tip = response.data.contest;
 
             setName(tip.name);
@@ -68,7 +68,7 @@ function RecipeEditForm({ idTip, onClose, reloadTips }) {
             try {
                 const descriptionText = description.getCurrentContent().getPlainText();
                 setLoadingPost(true)
-                await axios.put(`http://localhost:5231/api/Tips/update/${idTip}`, {
+                await axios.put(`http://localhost:5231/api/Tips/update/${idRecipe}`, {
                     name,
                     description: descriptionText,
                     isPublic: isPublic

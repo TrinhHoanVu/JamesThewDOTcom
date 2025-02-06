@@ -107,9 +107,8 @@ function PasswordManagement() {
 
     return (
         <div className="profile-container">
-            <div className="profile-box">
-                <h1 className="title">Password and Security</h1>
-                <p className="subtitle">Manage your account information</p>
+            <div className="profile-box" style={{ marginTop: "50px" }}>
+                <h1 className="profile-title">Password and Security</h1>
                 <div className="form-group">
                     <label htmlFor="current-password">Current Password
                         {errors.currentPassword && <span className="error-message" style={{ marginLeft: '20px', color: 'red' }}>
@@ -122,9 +121,11 @@ function PasswordManagement() {
                             name="current-password"
                             value={currentPassword}
                             onChange={(e) => setCurrentPassword(e.target.value)}
+                            className="resetpassword-page-input"
+                            style={{ marginTop: "10px" }}
                         />
                         <span className="toggle-password"
-                            style={{ position: 'absolute', top: '27%', right: '170px', transform: 'translateY(-50%)' }}
+                            style={{ position: 'absolute', top: '25.5%', right: '170px', transform: 'translateY(-50%)' }}
                             onClick={() => togglePasswordVisibility("current")}>
                             {showPassword.current ? <EyeOff /> : <Eye />}
                         </span>
@@ -144,9 +145,11 @@ function PasswordManagement() {
                             name="new-password"
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
+                            className="resetpassword-page-input"
+                            style={{ marginTop: "10px" }}
                         />
                         <span className="toggle-password"
-                            style={{ position: 'absolute', top: '38.5%', right: '170px', transform: 'translateY(-50%)' }}
+                            style={{ position: 'absolute', top: '37.3%', right: '170px', transform: 'translateY(-50%)' }}
                             onClick={() => togglePasswordVisibility("new")}>
                             {showPassword.new ? <EyeOff /> : <Eye />}
                         </span>
@@ -165,9 +168,11 @@ function PasswordManagement() {
                             name="confirm-password"
                             value={confirmNewPassword}
                             onChange={(e) => setConfirmNewPassword(e.target.value)}
+                            className="resetpassword-page-input"
+                            style={{ marginTop: "10px" }}
                         />
                         <span className="toggle-password"
-                            style={{ position: 'absolute', top: '50%', right: '170px', transform: 'translateY(-50%)' }}
+                            style={{ position: 'absolute', top: '49%', right: '170px', transform: 'translateY(-50%)' }}
                             onClick={() => togglePasswordVisibility("confirm")}>
                             {showPassword.confirm ? <EyeOff /> : <Eye />}
                         </span>
