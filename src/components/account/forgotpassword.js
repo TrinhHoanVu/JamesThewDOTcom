@@ -33,15 +33,16 @@ const ForgotPassword = () => {
     return (
         <div className="forgot-password-container">
             <div className="forgot-password-box">
-                <h1>Forgot Password</h1>
+                <h1 className="forgotpassowrd-title">Forgot Password</h1>
                 <form onSubmit={handleForgotPassword}>
-                    <div className="form-group">
-                        <label>Email:</label>
+                    <div className="forgot-password-form-group">
+                        <label className="forgot-password-label">Email:</label>
                         <input
                             type="email"
                             placeholder="Enter your email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
+                            className="forgot-password-input"
                         />
                     </div>
                     {message && <p className="message">{message}</p>}
@@ -49,7 +50,6 @@ const ForgotPassword = () => {
                     <button type="submit" className="submit-button">
                         Submit
                     </button>
-                    {/* Conditionally render the message */}
                 </form>
             </div>
         </div>

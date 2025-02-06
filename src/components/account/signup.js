@@ -83,22 +83,24 @@ const SignUp = () => {
     return (
         <div className="signup-container">
             <div className="signup-box">
-                <h1>Welcome to JamesThew's Kitchen!</h1>
+                <h1 className="forgotpassowrd-title">Welcome to JamesThew's Kitchen!</h1>
                 <div className="signup-form-group">
-                    <label>Name:</label>
+                    <label className="signup-label">Name:</label>
                     <input
                         type="text"
                         placeholder="Enter your name"
+                        className="signup-input"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                     />
                     {errors.name && <p className="signup-error">{errors.name}</p>}
                 </div>
                 <div className="signup-form-group">
-                    <label>Email:</label>
+                    <label className="signup-label">Email:</label>
                     <input
                         type="text"
                         placeholder="Enter your email"
+                        className="signup-input"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                     />
@@ -109,20 +111,22 @@ const SignUp = () => {
                     ) : null}
                 </div>
                 <div className="signup-form-group">
-                    <label>Password:</label>
+                    <label className="signup-label">Password:</label>
                     <input
                         type="password"
                         placeholder="Enter your password"
+                        className="signup-input"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                     />
                     {errors.password && <p className="signup-error">{errors.password}</p>}
                 </div>
                 <div className="signup-form-group">
-                    <label>Confirm Password:</label>
+                    <label className="signup-label">Confirm Password:</label>
                     <input
                         type="password"
                         placeholder="Confirm your password"
+                        className="signup-input"
                         value={cfPassword}
                         onChange={(e) => setCfPassword(e.target.value)}
                     />
