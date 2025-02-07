@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import { Editor, EditorState, ContentState, convertFromRaw } from "draft-js";
+import { DataContext } from "../../context/DatabaseContext";
 import "draft-js/dist/Draft.css";
 import axios from "axios";
 import Swal from 'sweetalert2';
@@ -9,12 +10,20 @@ import IngredientCard from "../recipes/ingredient-card";
 function Entry() {
     const { idRecipe } = useParams();
     const { id } = useParams();
+    const { tokenInfor } = useContext(DataContext);
+
     const [name, setName] = useState("");
     const [description, setDescription] = useState(() => EditorState.createEmpty());
     const [isPublic, setIsPublic] = useState(true);
     const [initialIngredientList, setinItialIngredientList] = useState([]);
     const [selectedIngredients, setSelectedIngredients] = useState([]);
     const [ingredientList, setIngredientList] = useState([]);
+    const [isApproved, setIsApproved] = useState(false);
+    const [idAccountPost, setIdAccountPost] = useState(null);
+    const [currentUserAccount, setCurrentUserAccount] = useState(null);
+    const [isFinished, setIsFinished] = useState(false);
+    const [canEdit, setCanEdit] = useState(false);
+    const [loadingPost, setLoadingPost] = useState(false);
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -23,10 +32,36 @@ function Entry() {
     const editorRef = useRef();
 
     useEffect(() => {
-        fetchRecipe();
-        fetchSpecificIngredients();
-        fetchIngredientList();
+        try {
+            fetchRecipe();
+            fetchSpecificIngredients();
+            fetchIngredientList();
+            fetchCurrentAccount();
+            setCanEdit(currentUserAccount && currentUserAccount.idAccount === idAccountPost && !isApproved && !isFinished)
+
+        } catch (er) { console.log(er) }
     }, []);
+
+    useEffect(() => {
+        console.log("currentUserAccount:", currentUserAccount);
+        console.log("idAccountPost:", idAccountPost);
+        console.log("isApproved:", isApproved);
+        console.log("isFinished:", isFinished);
+        setCanEdit(currentUserAccount && currentUserAccount.idAccount === idAccountPost && !isApproved && !isFinished);
+    }, [currentUserAccount, idAccountPost, isApproved, isFinished]);
+
+
+    console.log(canEdit)
+    const fetchCurrentAccount = async () => {
+        try {
+            const response = await axios.get(`http://localhost:5231/api/Account/${tokenInfor.email}`)
+            if (response) {
+                setCurrentUserAccount(response.data)
+            }
+        } catch (error) {
+            console.log(error)
+        }
+    }
 
     const fetchRecipe = async () => {
         try {
@@ -35,6 +70,9 @@ function Entry() {
 
             setName(recipe.name);
             setIsPublic(recipe.isPublic);
+            setIsApproved(recipe.isApproved)
+            setIdAccountPost(recipe.idAccountPost)
+            setIsFinished(recipe.contest.status === "FINISHED");
 
             if (recipe.description) {
                 try {
@@ -88,6 +126,70 @@ function Entry() {
         navigate(`/contest/${id}`);
     };
 
+    const handleIngredientSelect = (ingredientName) => {
+        const ingredient = ingredientList.find(item => item.name === ingredientName);
+        if (ingredient && !selectedIngredients.some(item => item.name === ingredientName)) {
+            setSelectedIngredients([...selectedIngredients, { ...ingredient, quantity: 0 }]);
+        }
+    };
+
+    const validate = () => {
+        const errors = {};
+        try {
+            if (!name.trim()) errors.name = "Name is required.";
+            if (!description.getCurrentContent().hasText()) errors.description = "Description is required.";
+            const missingQuantities = selectedIngredients.filter(item => !item.quantity || item.quantity <= 0);
+            if (missingQuantities.length > 0) {
+                errors.ingredients = `Please enter a quantity for: ${missingQuantities.map(item => item.name).join(", ")}`;
+            }
+        } catch (err) { console.log(err) }
+        return errors;
+    };
+
+
+    const handleSave = async (e) => {
+        e.preventDefault();
+
+        try {
+            const validationErrors = validate();
+            if (Object.keys(validationErrors).length > 0) {
+                Swal.fire({ icon: "error", title: "Validation Error", text: Object.values(validationErrors).join("\n") });
+                return;
+            }
+
+            Swal.fire({
+                title: "Saving...",
+                text: "Please wait while we save the recipe.",
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            setLoadingPost(true);
+
+
+            const descriptionText = description.getCurrentContent().getPlainText();
+            await axios.put(`http://localhost:5231/api/Recipe/updateRecipe/${idRecipe}`, {
+                name,
+                description: descriptionText
+            });
+
+            await axios.put(`http://localhost:5231/api/Recipe/updateRecipeIngredients/${idRecipe}`, {
+                ingredients: selectedIngredients.map(item => ({
+                    ingredientID: item.idIngredient,
+                    quantity: item.quantity
+                }))
+            });
+
+            Swal.fire({ icon: 'success', title: 'Recipe updated successfully!', timer: 1500 })
+        } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Failed to update recipe', text: 'Please try again later.' });
+        } finally {
+            setLoadingPost(false);
+        }
+    };
+
     if (loading) return <p>Loading...</p>;
     if (error) return <p>{error}</p>;
 
@@ -117,11 +219,8 @@ function Entry() {
                 <div style={{ flex: 1, padding: "20px", display: "flex", flexDirection: "column" }}>
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                         <label>Name:</label>
-                        <p>{name}</p> {/* Display name instead of input */}
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                        <label>Status:</label>
-                        <p>{isPublic ? "Public" : "Private"}</p> {/* Display status */}
+                        {canEdit ? (<input type="text" value={name} onChange={(e) => setName(e.target.value)}
+                            style={{ width: "97%", padding: "8px", backgroundColor: "transparent" }} />) : (<p>{name}</p>)}
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                         <label>Cooking Procedure:</label>
@@ -133,14 +232,25 @@ function Entry() {
                             <Editor
                                 ref={editorRef}
                                 editorState={description}
-                                readOnly
-                                onChange={() => { }}
-                            /> {/* Make the editor read-only */}
+                                readOnly={!canEdit}
+                                onChange={canEdit ? setDescription : () => { }}
+                            />
                         </div>
                     </div>
                 </div>
                 <div style={{ flex: 1, padding: "20px" }}>
                     <label>Ingredients:</label>
+                    {canEdit && (<div style={{ marginBottom: "10px" }}>
+                        <select
+                            onChange={(e) => handleIngredientSelect(e.target.value)}
+                            style={{ width: "100%", padding: "8px", backgroundColor: "transparent", marginTop: "10px" }}
+                        >
+                            <option value="">Select an ingredient</option>
+                            {ingredientList.map((ingredient, index) => (
+                                <option key={index} value={ingredient.name}>{ingredient.name}</option>
+                            ))}
+                        </select>
+                    </div>)}
                     <div style={{ marginBottom: "10px" }}>
                         {selectedIngredients.length > 0 ? (
                             <div className="ingredient-card-wrapper">
@@ -176,7 +286,16 @@ function Entry() {
                                             <tr key={index}>
                                                 <td style={{ padding: "10px", border: "1px solid #ddd" }}>{ingredientName.name}</td>
                                                 <td style={{ padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>
-                                                    {ingredientName.quantity}
+                                                    {canEdit ? (<input type="number" min={0}
+                                                        className="add-ingredient-table"
+                                                        defaultValue={ingredientName.quantity}
+                                                        onChange={(e) => {
+                                                            const value = Math.max(0, e.target.value);
+                                                            setSelectedIngredients(selectedIngredients.map(item =>
+                                                                item.name === ingredient.name ? { ...item, quantity: value } : item
+                                                            ));
+                                                        }}
+                                                        style={{ width: "50%", textAlign: "center" }} />) : ingredientName.quantity}
                                                 </td>
                                                 <td style={{ padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>
                                                     {ingredient ? ingredient.unit.trim() : "Unit not found"}
@@ -188,6 +307,10 @@ function Entry() {
                             </table>
                         </div>
                     )}
+                    {canEdit && (<div>
+                        <button onClick={handleSave} className="add-recipe-submit-button">Save</button>
+                        {loadingPost && <p style={{ color: "blue" }}>Saving contest, please wait...</p>}
+                    </div>)}
                 </div>
             </div>
         </div>
