@@ -16,6 +16,7 @@ import RecipesPage from "../components/recipes/recipes-page"
 import Approval from "../components/recipes/approval"
 import AddRecipe from "../components/recipes/add-recipe"
 import RecipeEditForm from "../components/management/recipe-edit"
+import Entry from "../components/contest/entry"
 
 const publicRouter = [
     {
@@ -45,6 +46,10 @@ const publicRouter = [
     {
         path: "/contest/:id",
         element: <ContestDetail />
+    },
+    {
+        path: "/contest/:id/entries/:idRecipe",
+        element: <Entry />
     },
     {
         path: "/contest",

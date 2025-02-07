@@ -45,6 +45,7 @@ function AttendeesDetail() {
     const compareTableRef = useRef(null)
     const [tableCompare, setTableCompare] = useState(false);
     const [checkedState, setCheckedState] = useState();
+    const [ingredientList, setIngredientList] = useState([]);
 
     useThrottledResizeObserver(() => {
         if (attendeesList.length > 0) {
@@ -69,18 +70,26 @@ function AttendeesDetail() {
     }, [attendeesList]);
 
     useEffect(() => {
-        fetchAttendeesList(contestId);
+        try {
+            fetchAttendeesList(contestId);
+            fetchIngredients()
+        } catch (err) { console.log(err) }
     }, [contestId]);
 
     useEffect(() => {
         setCheckedState(new Array(attendeesList.length).fill(false));
     }, [attendeesList]);
 
+    const fetchIngredients = async () => {
+        try {
+            const response = await axios.get("http://localhost:5231/api/Recipe/getAllIngredient")
+            setIngredientList(response.data.$values)
+        } catch (err) { console.log(err) }
+    }
+
     const fetchAttendeesList = async (contestId) => {
         try {
-            const response = await axios.get(`http://localhost:5231/api/Contest/getTopComments`, {
-                params: { contestId: contestId }
-            });
+            const response = await axios.get(`http://localhost:5231/api/Contest/getRecipes/${contestId}`);
 
             if (response.data) {
                 setAttendeesList(response.data.$values || []);
@@ -97,6 +106,7 @@ function AttendeesDetail() {
     };
 
     const addCommentsToCompare = (index) => {
+        const recipe = attendeesList[index];
 
         setCheckedState((prevState) => {
             const updatedState = [...prevState];
@@ -108,25 +118,32 @@ function AttendeesDetail() {
             let updatedComments;
 
             try {
-                const isCommentSelected = prevSelectedComments.some(comment => comment.content === attendeesList[index].content);
+                const isRecipeSelected = prevSelectedComments.some(
+                    (comment) => comment.name === recipe.name
+                );
 
-                if (isCommentSelected) {
-                    updatedComments = prevSelectedComments.filter(comment => comment.content !== attendeesList[index].content);
+                if (isRecipeSelected) {
+                    updatedComments = prevSelectedComments.filter(
+                        (comment) => comment.name !== recipe.name
+                    );
                 } else {
-                    updatedComments = [...prevSelectedComments, attendeesList[index]];
+                    updatedComments = [...prevSelectedComments, recipe];
                     if (updatedComments.length > 3) updatedComments = updatedComments.slice(1);
                 }
 
                 if (updatedComments.length === 0) {
                     setTableCompare(false);
                 }
+
+                console.log(updatedComments);
             } catch (err) {
-                console.log(err)
+                console.log(err);
             }
 
             return updatedComments;
         });
     };
+
 
     const handleClear = () => {
         setTableCompare(false);
@@ -136,20 +153,20 @@ function AttendeesDetail() {
 
     const handleApproveComments = async () => {
         try {
-            const commentsToApprove = selectedComments.filter(comment => !comment.isApproved);
-
-            if (commentsToApprove.length === 0) {
+            const recipesToApprove = selectedComments.filter(recipe => !recipe.isApproved);
+            console.log(recipesToApprove[0].idRecipe)
+            if (recipesToApprove.length === 0) {
                 Swal.fire({
                     icon: "info",
                     title: "No Action Needed",
-                    text: "No comments need approval."
+                    text: "No recipes need approval."
                 });
                 return;
             }
 
             Swal.fire({
                 title: 'Are you sure?',
-                text: 'Do you want to approve all the changes?',
+                text: 'Do you want to approve all the selected recipes?',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#3085d6',
@@ -159,22 +176,22 @@ function AttendeesDetail() {
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     await Promise.all(
-                        commentsToApprove.map(comment =>
-                            axios.put(`http://localhost:5231/api/Contest/approveComment/${comment.idComment}`)
+                        recipesToApprove.map(recipe =>
+                            axios.put(`http://localhost:5231/api/Contest/approveRecipe/${recipe.idRecipe}`)
                         )
                     );
 
                     setSelectedComments(prevComments =>
-                        prevComments.map(comment =>
-                            commentsToApprove.some(c => c.idComment === comment.idComment)
-                                ? { ...comment, isApproved: true }
-                                : comment
+                        prevComments.map(recipe =>
+                            recipesToApprove.some(r => r.idRecipe === recipe.idRecipe)
+                                ? { ...recipe, isApproved: true }
+                                : recipe
                         )
                     );
 
                     setAttendeesList(prevAttendeesList =>
                         prevAttendeesList.map(attendee =>
-                            commentsToApprove.some(c => c.idComment === attendee.idComment)
+                            recipesToApprove.some(r => r.idRecipe === attendee.idRecipe)
                                 ? { ...attendee, isApproved: true }
                                 : attendee
                         )
@@ -183,19 +200,20 @@ function AttendeesDetail() {
                     Swal.fire({
                         icon: "success",
                         title: "Success",
-                        text: "Selected comments have been approved!"
+                        text: "Selected recipes have been approved!"
                     });
                 }
             });
         } catch (error) {
-            console.error("Error approving comments:", error);
+            console.error("Error approving recipes:", error);
             Swal.fire({
                 icon: "error",
                 title: "Approval Failed",
-                text: "Failed to approve comments. Please try again."
+                text: "Failed to approve recipes. Please try again."
             });
         }
     };
+
 
     return (
         <div className="attendees-modal-overlay">
@@ -219,7 +237,8 @@ function AttendeesDetail() {
                         <tr>
                             <th className="select-column"></th>
                             <th className="name-column">Name</th>
-                            <th className="comment-column">Comment</th>
+                            <th className="comment-column">Cooking Procedure</th>
+                            <th className="ingredients-column">Ingredients</th>
                             <th className="likes-column">Likes</th>
                             <th className="status-column">Status</th>
                         </tr>
@@ -231,8 +250,18 @@ function AttendeesDetail() {
                                     <td style={{ textAlign: "center" }} onClick={() => addCommentsToCompare(index)}>
                                         {checkedState[index] ? <FaCheck /> : <div></div>}
                                     </td>
-                                    <td>{attendee.account.name}</td>
-                                    <td>{attendee.content}</td>
+                                    <td>{attendee.name}</td>
+                                    <td>{attendee.description}</td>
+                                    <td>
+                                        {attendee.recipeIngredients.$values.map((ingredientId, index) => {
+                                            const ingredient = ingredientList.find(ingredient => ingredient.idIngredient === ingredientId.ingredientID);
+                                            // console.log(ingredientList)
+                                            // console.log(ingredientId.recipeId)
+                                            return ingredient ? <div key={index}>{ingredient.name} {ingredientId.quantity} {ingredient.unit.trim()}</div> :
+                                                <div key={index}>Unknown Ingredient</div>;
+                                        })}
+                                    </td>
+
                                     <td style={{ textAlign: "left" }}>{attendee.likes}</td>
                                     <td>{attendee.isApproved ? "Approved" : "Waiting"}</td>
                                 </tr>

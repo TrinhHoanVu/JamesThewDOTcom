@@ -1,23 +1,47 @@
 import React, { useEffect, useState } from 'react';
 import CommentForm from "./commentForm.js";
-import { useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import axios from "axios";
 import "../../css/contest/contest-detail.css";
 import NotFoundPage from '../notFoundPage.js';
+import Swal from "sweetalert2";
 
 function ContestDetail() {
     const { id } = useParams();
     const [contest, setContest] = useState(null);
     const [description, setDescription] = useState("");
     const [winner, setWinner] = useState([]);
+    const [entryList, setEntryList] = useState([]);
+
+    const navigate = useNavigate()
+    const location = useLocation()
 
     useEffect(() => {
         if (id) {
             fetchContest();
+            fetchAttendeesList()
         } else {
             console.error("Invalid contest ID.");
         }
     }, [id]);
+
+    const fetchAttendeesList = async (contestId) => {
+        try {
+            const response = await axios.get(`http://localhost:5231/api/Contest/getRecipesWithAccount/${id}`);
+
+            if (response.data) {
+                setEntryList(response.data.$values || []);
+                // console.log("Attendees list:", response.data.$values);
+            }
+        } catch (err) {
+            console.error("Error fetching attendees list:", err);
+            Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: "Failed to load entries. Please try again."
+            });
+        }
+    };
 
     const fetchContest = async () => {
         try {
@@ -48,6 +72,15 @@ function ContestDetail() {
         } catch (err) { console.log(err) }
     };
 
+    const handleToggleExpand = (index) => {
+        const link = location.pathname
+        navigate(`${link}/entries/${index}`)
+    };
+
+    const getShortDescription = (description) => {
+        return description && description.length > 100 ? `${description.slice(0, 100)}...` : description;
+    };
+
     return (
         <div className="contestdt-container">
             {contest ? (
@@ -69,7 +102,23 @@ function ContestDetail() {
                             </p>
                         </div>
                     </div>
-                    <CommentForm contestId={id} contest={contest} />
+                    <div className="cmtForm-container">
+                        <h3 className="cmtForm-header">Participants' Entries</h3>
+                        <div className="entries-list">
+                            {entryList.map((entry, index) => (
+                                <div key={entry.idRecipe} className="entry-item">
+                                    <h4>{entry.name}</h4>
+                                    <p>{getShortDescription(entry.description)}</p>
+                                    <button onClick={() => handleToggleExpand(entry.idRecipe)}>
+                                        See More
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <br /><br /><br /><br />
+
+                    {/* <CommentForm contestId={id} contest={contest} /> */}
                 </div>
             ) : <NotFoundPage />}
 
