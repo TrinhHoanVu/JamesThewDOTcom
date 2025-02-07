@@ -16,7 +16,6 @@ function RecipeEditForm() {
     const [selectedIngredients, setSelectedIngredients] = useState([]);
     const [ingredientList, setIngredientList] = useState([]);
 
-
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -104,27 +103,47 @@ function RecipeEditForm() {
         try {
             if (!name.trim()) errors.name = "Name is required.";
             if (!description.getCurrentContent().hasText()) errors.description = "Description is required.";
+            const missingQuantities = selectedIngredients.filter(item => !item.quantity || item.quantity <= 0);
+            if (missingQuantities.length > 0) {
+                errors.ingredients = `Please enter a quantity for: ${missingQuantities.map(item => item.name).join(", ")}`;
+            }
         } catch (err) { console.log(err) }
         return errors;
     };
 
     const handleIngredientRemove = (ingredient) => {
-        console.log(ingredientList)
-        setSelectedIngredients(selectedIngredients.filter((item) => item.name !== ingredient));
-
+        try {
+            console.log(ingredientList)
+            setSelectedIngredients(selectedIngredients.filter((item) => item.name !== ingredient));
+        } catch (err) { console.log(err) }
     };
 
     const handleSave = async (e) => {
         e.preventDefault();
 
-        setLoadingPost(true);
-
         try {
+            const validationErrors = validate();
+            if (Object.keys(validationErrors).length > 0) {
+                Swal.fire({ icon: "error", title: "Validation Error", text: Object.values(validationErrors).join("\n") });
+                return;
+            }
+
+            Swal.fire({
+                title: "Saving...",
+                text: "Please wait while we save the recipe.",
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            setLoadingPost(true);
+
+
             const descriptionText = description.getCurrentContent().getPlainText();
             await axios.put(`http://localhost:5231/api/Recipe/updateRecipe/${idRecipe}`, {
                 name,
-                description: descriptionText,
-                isPublic
+                description: descriptionText
             });
 
             await axios.put(`http://localhost:5231/api/Recipe/updateRecipeIngredients/${idRecipe}`, {
@@ -183,6 +202,7 @@ function RecipeEditForm() {
                         <label >Name:</label>
                         <input type="text" value={name} onChange={(e) => setName(e.target.value)}
                             style={{ width: "97%", padding: "8px", backgroundColor: "transparent" }} />
+                        {errors.name && <span style={{ color: "red" }}>{errors.name}</span>}
                         <br /><br />
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
@@ -195,7 +215,8 @@ function RecipeEditForm() {
                         <br /><br />
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                        <label>Cooking Procedure:</label>
+                        <label>Cooking Procedure: {errors.description && <span style={{ color: "red" }}>{errors.description}</span>}
+                        </label>
                         <div style={{
                             border: "1px solid #ddd", height: "300px", padding: "10px",
                             backgroundColor: "rgba(255, 255, 255, 0.2)"
