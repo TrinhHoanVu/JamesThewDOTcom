@@ -223,7 +223,7 @@ function AddContest({ onClose, reloadContests }) {
             justifyContent: "center", gap: "20px"
         }}>
             <div style={{ width: "500px" }}>
-                <div style={{ marginBottom: "45px", height: "50px", }}>
+                <div style={{ marginBottom: "45px", height: "50px", width: "95.9%" }}>
                     <label htmlFor="name">Name:</label>
                     <input
                         type="text"
@@ -235,7 +235,7 @@ function AddContest({ onClose, reloadContests }) {
                     {errors.name && <span style={{ color: "red" }}>{errors.name}</span>}
                 </div>
 
-                <div style={{ marginBottom: "45px", height: "50px" }}>
+                <div style={{ marginBottom: "45px", height: "50px", width: "95.9%" }}>
                     <label htmlFor="price">Price ($):</label>
                     <input
                         type="number"
@@ -247,7 +247,7 @@ function AddContest({ onClose, reloadContests }) {
                     {errors.price && <span style={{ color: "red" }}>{errors.price}</span>}
                 </div>
 
-                <div style={{ marginBottom: "45px", height: "50px" }}>
+                <div style={{ marginBottom: "45px", height: "50px", width: "95.9%" }}>
                     <label htmlFor="startDate">Start Date:</label>
                     <input
                         type="date"
@@ -259,7 +259,7 @@ function AddContest({ onClose, reloadContests }) {
                     {errors.startDate && <span style={{ color: "red" }}>{errors.startDate}</span>}
                 </div>
 
-                <div style={{ marginBottom: "45px", height: "50px" }}>
+                <div style={{ marginBottom: "45px", height: "50px", width: "95.9%" }}>
                     <label htmlFor="endDate">End Date:</label>
                     <input
                         type="date"
