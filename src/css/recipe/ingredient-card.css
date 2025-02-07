@@ -44,3 +44,16 @@
     background-color: transparent;
     width: 50%;
 }
+
+.add-recipe-submit-button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 20px;
+    background-color: #e67e22;
+    border: none;
+    cursor: pointer;
+}
+
+.add-recipe-submit-button:hover {
+    background-color: #f89946;
+}

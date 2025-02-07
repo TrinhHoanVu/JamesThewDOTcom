@@ -3,16 +3,26 @@ import { Editor, EditorState, ContentState, convertFromRaw } from "draft-js";
 import "draft-js/dist/Draft.css";
 import axios from "axios";
 import Swal from 'sweetalert2';
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import IngredientCard from "../recipes/ingredient-card";
 
-function RecipeEditForm({ idRecipe, onClose, reloadTips }) {
+
+function RecipeEditForm() {
+    const { idRecipe } = useParams()
     const [name, setName] = useState("");
     const [description, setDescription] = useState(() => EditorState.createEmpty());
     const [isPublic, setIsPublic] = useState(true);
+    const [initialIngredientList, setinItialIngredientList] = useState([]);
+    const [selectedIngredients, setSelectedIngredients] = useState([]);
+    const [ingredientList, setIngredientList] = useState([]);
+
 
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [loadingPost, setLoadingPost] = useState(false);
+
+    const navigate = useNavigate()
 
     const editorRef = useRef();
 
@@ -22,30 +32,72 @@ function RecipeEditForm({ idRecipe, onClose, reloadTips }) {
         } catch (er) { console.log(er) }
     };
 
-    const fetchTip = async () => {
+    useEffect(() => {
+        try {
+            fetchRecipe();
+            fetchSpecificIngredients()
+            fetchIngredientList()
+        } catch (err) { console.log(err) }
+    }, []);
+
+    const fetchRecipe = async () => {
         try {
             const response = await axios.get(`http://localhost:5231/api/Recipe/detail/${idRecipe}`);
-            const tip = response.data.contest;
+            const recipe = response.data.contest;
 
-            setName(tip.name);
-            setIsPublic(tip.isPublic)
+            setName(recipe.name);
+            setIsPublic(recipe.isPublic)
 
-            if (tip.decription) {
+            if (recipe.description) {
                 try {
-                    const contentState = convertFromRaw(JSON.parse(tip.decription));
+                    const contentState = convertFromRaw(JSON.parse(recipe.description));
                     setDescription(EditorState.createWithContent(contentState));
                 } catch (e) {
-                    const contentState = ContentState.createFromText(tip.decription);
+                    const contentState = ContentState.createFromText(recipe.description);
                     setDescription(EditorState.createWithContent(contentState));
                 }
             }
 
             setLoading(false);
         } catch (err) {
-            setError("Failed to load tip details.");
+            setError("Failed to load recipe details.");
             setLoading(false);
         }
     };
+
+    const fetchSpecificIngredients = async () => {
+        try {
+            const response = await axios.get(`http://localhost:5231/api/Recipe/getIngredientsFromSpecificRecipe/${idRecipe}`);
+
+            const formattedIngredients = response.data.$values.map(item => ({
+                "$id": item.ingredient.$id,
+                "idIngredient": item.ingredient.idIngredient,
+                "quantity": item.quantity,
+                "name": item.ingredient.name,
+                "unit": item.ingredient.unit.trim(),
+                "recipeIngredients": null
+            }));
+
+            console.log(formattedIngredients)
+            setinItialIngredientList(formattedIngredients)
+            setSelectedIngredients(formattedIngredients)
+            setLoading(false);
+        } catch (err) {
+            setError("Failed to load recipe details.");
+            setLoading(false);
+        }
+    };
+
+    const fetchIngredientList = async () => {
+        try {
+            const response = await axios.get("http://localhost:5231/api/Recipe/getAllIngredient")
+            const ingredientsWithQuantity = response.data.$values.map(item => ({
+                ...item,
+                quantity: 0,
+            }));
+            setIngredientList(ingredientsWithQuantity);
+        } catch (err) { console.log(err) }
+    }
 
     const validate = () => {
         const errors = {};
@@ -54,6 +106,11 @@ function RecipeEditForm({ idRecipe, onClose, reloadTips }) {
             if (!description.getCurrentContent().hasText()) errors.description = "Description is required.";
         } catch (err) { console.log(err) }
         return errors;
+    };
+
+    const handleIngredientRemove = (ingredient) => {
+        console.log(ingredientList)
+        setSelectedIngredients(selectedIngredients.filter((item) => item !== ingredient));
     };
 
     const handleSave = async (e) => {
@@ -76,7 +133,7 @@ function RecipeEditForm({ idRecipe, onClose, reloadTips }) {
 
                 setLoadingPost(false)
 
-                localStorage.setItem("managementTab", "tip");
+                localStorage.setItem("managementTab", "recipe");
                 Swal.fire({
                     icon: 'success',
                     title: 'Tip updated successfully!',
@@ -85,18 +142,10 @@ function RecipeEditForm({ idRecipe, onClose, reloadTips }) {
                 }).then(() => {
                     window.location.reload();
                 });
-
-
-                if (reloadTips) {
-                    await reloadTips();
-                }
-                if (onClose) {
-                    onClose();
-                }
             } catch (err) {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Failed to update Tip',
+                    title: 'Failed to update recipe',
                     text: 'Please try again later.',
                 });
                 setLoading(false)
@@ -104,73 +153,144 @@ function RecipeEditForm({ idRecipe, onClose, reloadTips }) {
         } catch (er) { console.log(er) }
     };
 
-    useEffect(() => {
-        fetchTip();
-    }, []);
+    const handleIngredientSelect = (ingredientName) => {
+        const ingredient = ingredientList.find(item => item.name === ingredientName);
+        if (ingredient && !selectedIngredients.some(item => item.name === ingredientName)) {
+            setSelectedIngredients([...selectedIngredients, { ...ingredient, quantity: 0 }]);
+        }
+    };
 
     if (loading) return <p>Loading...</p>;
     if (error) return <p>{error}</p>;
 
     return (
-        <div style={{
-            maxWidth: "1000px", minWidth: "1000px", margin: "0 auto", padding: "10px", display: "flex",
-            justifyContent: "center", gap: "20px"
-        }}>
-            <div style={{ width: "500px" }}>
-                <div style={{ marginBottom: "45px", height: "50px", }}>
-                    <label htmlFor="name">Name:</label>
-                    <input
-                        type="text"
-                        id="name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        style={{ width: "100%", padding: "8px", margin: "5px 0" }}
-                    />
-                    {errors.name && <span style={{ color: "red" }}>{errors.name}</span>}
+        <div style={{ maxHeight: "100vh", marginTop: "10px" }}>
+            <div style={{
+                textAlign: "center", display: "flex", alignItems: "center",
+                justifyContent: "space-between", flexDirection: "row", height: "30px",
+                width: "100%"
+            }}>
+                <div style={{ textAlign: "center", width: "97%" }}>
+                    <h2>Create New Recipe</h2>
                 </div>
-                <div style={{ marginBottom: "45px", height: "50px" }}>
-                    <label htmlFor="status">Status:</label>
-                    <select
-                        id="status"
-                        value={isPublic ? "true" : "false"}
-                        onChange={(e) => setIsPublic(e.target.value === "true")}
-                        style={{ width: "100%", padding: "8px", margin: "5px 0" }}
-                    >
-                        <option value="true">Public</option>
-                        <option value="false">Private</option>
-                    </select>
-                </div>
-                <div style={{
-                    marginBottom: "15px", display: "flex",
-                    justifyContent: "center", flexDirection: "column", gap: "20px"
-                }}>
-                    <label htmlFor="description">Description:</label>
-                    <div style={{
-                        border: "1px solid #ddd",
-                        height: "250px",
-                        padding: "10px",
-                        width: "500px",
-                        overflow: "auto",
-                        backgroundColor: "#fff"
-                    }} onClick={focus}>
-                        <Editor
-                            ref={editorRef}
-                            editorState={description}
-                            onChange={(editorState) => setDescription(editorState)}
-                        />
+                <button style={{
+                    height: "20px", width: "3%", cursor: "pointer",
+                    background: "none", border: "none", fontSize: "15px", paddingRight: "50px"
+                }}
+                    onClick={() =>
+                        navigate("/management", {
+                            state: { isProfile: false, isContest: false, isRecipe: true, isTip: false }
+                        })
+                    }>Back</button>
+            </div>
+            <div style={{
+                width: "100vw", height: "100vh", display: "flex", padding: "20px", boxSizing: "border-box",
+                background: "linear-gradient(to top, rgba(255, 126, 95, 0.5), #ffffff)"
+            }}>
+                <div style={{ flex: 1, padding: "20px", display: "flex", flexDirection: "column" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                        <label >Name:</label>
+                        <input type="text" value={name} onChange={(e) => setName(e.target.value)}
+                            style={{ width: "97%", padding: "8px", backgroundColor: "transparent" }} />
+                        <br /><br />
                     </div>
-                    {errors.description && <span style={{ color: "red" }}>{errors.description}</span>}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                        <label>Status:</label>
+                        <select value={isPublic ? "true" : "false"} onChange={(e) => setIsPublic(e.target.value === "true")}
+                            style={{ width: "100%", padding: "8px", backgroundColor: "transparent" }}>
+                            <option value="true">Public</option>
+                            <option value="false">Private</option>
+                        </select>
+                        <br /><br />
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                        <label>Cooking Procedure:</label>
+                        <div style={{
+                            border: "1px solid #ddd", height: "300px", padding: "10px",
+                            backgroundColor: "rgba(255, 255, 255, 0.2)"
+                        }} onClick={() => editorRef.current.focus()}>
+                            <Editor ref={editorRef} editorState={description} onChange={setDescription} />
+                        </div>
+                    </div>
+                </div>
+                <div style={{ flex: 1, padding: "20px" }}>
+                    <label>Ingredients:</label>
+                    <div style={{ marginBottom: "10px" }}>
+                        <select
+                            onChange={(e) => handleIngredientSelect(e.target.value)}
+                            style={{ width: "100%", padding: "8px", backgroundColor: "transparent", marginTop: "10px" }}
+                        >
+                            <option value="">Select an ingredient</option>
+                            {ingredientList.map((ingredient, index) => (
+                                <option key={index} value={ingredient.name}>{ingredient.name}</option>
+                            ))}
+                        </select>
+                    </div>
 
-                    <button
-                        onClick={handleSave}
-                        style={{ padding: "10px 20px", backgroundColor: "#ffc107", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}
-                    >
-                        Save
-                    </button>
-                    {loadingPost && <div style={{ marginTop: "10px", color: "blue" }}>Saving Tip, please wait...</div>}
+                    {selectedIngredients.length > 0 && (
+                        <div className="ingredient-card-wrapper">
+                            {console.log(selectedIngredients)}
+                            {selectedIngredients.map((ingredient, index) => {
+                                return (
+                                    <IngredientCard
+                                        key={index}
+                                        name={ingredient?.name || "UNKNOWN"}
+                                        handleIngredientRemove={handleIngredientRemove}
+                                    />
+                                );
+                            })}
+                        </div>
+                    )}
+
+
+                    {selectedIngredients.length > 0 && (
+                        <div style={{ maxHeight: "355px", overflowY: "auto", border: "1px solid #ccc", marginTop: "10px" }}>
+                            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                                <thead>
+                                    <tr style={{ backgroundColor: "#f4f4f4" }}>
+                                        <th style={{ padding: "10px", border: "1px solid #ddd", width: "70%" }}>Ingredient</th>
+                                        <th style={{ padding: "10px", border: "1px solid #ddd", width: "20%" }}>Quantity</th>
+                                        <th style={{ padding: "10px", border: "1px solid #ddd", width: "10%" }}>Unit</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {selectedIngredients.map((ingredientName, index) => {
+                                        const ingredient = ingredientList.find(item => item.name === ingredientName.name);
+
+                                        return (
+                                            <tr key={index}>
+                                                <td style={{ padding: "10px", border: "1px solid #ddd" }}>{ingredientName.name}</td>
+                                                <td style={{ padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>
+                                                    <input type="number" min={0}
+                                                        className="add-ingredient-table"
+                                                        defaultValue={ingredientName.quantity}
+                                                        onChange={(e) => {
+                                                            const value = Math.max(0, e.target.value);
+                                                            setSelectedIngredients(selectedIngredients.map(item =>
+                                                                item.name === ingredient.name ? { ...item, quantity: value } : item
+                                                            ));
+                                                        }}
+                                                        style={{ width: "50%", textAlign: "center" }} />
+                                                </td>
+                                                <td style={{ padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>
+                                                    {ingredient ? ingredient.unit.trim() : "Unit not found"}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+
+                            </table>
+                        </div>
+                    )}
+
+                    <div>
+                        <button onClick={handleSave} className="add-recipe-submit-button">Save</button>
+                        {loadingPost && <p style={{ color: "blue" }}>Saving contest, please wait...</p>}
+                    </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
 

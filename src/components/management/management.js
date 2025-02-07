@@ -27,34 +27,35 @@ const Management = () => {
   const [profileStatus, setProfileStatus] = useState(isProfile);
   const [passwordStatus, setPasswordStatus] = useState(isPassword);
 
-
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (storedTab === "tip") {
-      handleChangeTip();
-    } else if (storedTab === "contest") {
-      handleChangeContest();
-    } else if (storedTab === "recipe") {
-      handleChangeRecipe();
-    } else if (storedTab === "profile") {
-      handleChangeProfile();
-    } else if (storedTab === "password") {
-      handleChangePassword();
-    } else {
-      if (isContest) {
-        handleChangeContest();
-      } else if (isRecipe) {
-        handleChangeRecipe();
-      } else if (isTip) {
+    try {
+      if (storedTab === "tip") {
         handleChangeTip();
-      } else if (isProfile) {
+      } else if (storedTab === "contest") {
+        handleChangeContest();
+      } else if (storedTab === "recipe") {
+        handleChangeRecipe();
+      } else if (storedTab === "profile") {
         handleChangeProfile();
-      } else {
+      } else if (storedTab === "password") {
         handleChangePassword();
+      } else {
+        if (isContest) {
+          handleChangeContest();
+        } else if (isRecipe) {
+          handleChangeRecipe();
+        } else if (isTip) {
+          handleChangeTip();
+        } else if (isPassword) {
+          handleChangePassword();
+        } else {
+          handleChangeProfile();
+        }
       }
-    }
-    localStorage.removeItem("managementTab");
+      localStorage.removeItem("managementTab");
+    } catch (err) { console.log(err) }
   }, [isProfile, isContest, isRecipe, isTip, isPassword]);
 
   const handleChangeContest = () => {
