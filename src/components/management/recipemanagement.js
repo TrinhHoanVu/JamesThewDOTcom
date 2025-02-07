@@ -129,9 +129,9 @@ function RecipeManagement() {
     }
 
     const handleEdit = (idRecipe) => {
-        setEditTable(true)
-        setIdChoosenRecipe(idRecipe)
-        console.log(idChoosenRecipe)
+        try {
+            navigate(`/recipe/edit/${idRecipe}`)
+        } catch (err) { console.log(err) }
     }
 
     const handleDelete = (idRecipe, name, idAccountPost) => {
@@ -170,6 +170,8 @@ function RecipeManagement() {
                         });
                         const response = await axios.get(`http://localhost:5231/api/Account/getEmailAccount/${idAccountPost}`)
 
+                        await axios.delete(`http://localhost:5231/api/Recipe/deleteIngredientsFromRecipe/${idRecipe}`);
+
                         await axios.delete(`http://localhost:5231/api/Recipe/delete/${idRecipe}`);
 
                         let subject = "Your recipe has been deleted!!!"
@@ -181,7 +183,7 @@ function RecipeManagement() {
                             Body: body
                         })
 
-                        localStorage.setItem("managementTab", "tip");
+                        localStorage.setItem("managementTab", "recipe");
                         Swal.fire({
                             title: 'Deleted!',
                             text: 'The recipe has been deleted.',
@@ -201,7 +203,7 @@ function RecipeManagement() {
 
     const handleAddRecipe = () => {
         try {
-            navigate("/recipe/add")
+            navigate("/recipe/add", { state: { isApproved: true } })
         } catch (err) { console.log(err) }
     }
 
@@ -279,17 +281,6 @@ function RecipeManagement() {
                     <button className="compare-button" onClick={() => NavigateToApprovelPage()}><FaCheck /> Approve</button>
                     <button className="compare-button" onClick={() => handleClear()}><FaTimes /> Clear</button>
                 </div>
-
-                {editTable && (
-                    <div className="edit-modal-overlay">
-                        <div className="edit-modal">
-                            <RecipeEditForm idRecipe={idChoosenRecipe} onClose={() => setEditTable(false)} reloadRecipes={reloadRecipes} />
-                            <button className="close-modal-button" onClick={() => setEditTable(false)}>
-                                Close
-                            </button>
-                        </div>
-                    </div>
-                )}
             </div>
         </div>
     );

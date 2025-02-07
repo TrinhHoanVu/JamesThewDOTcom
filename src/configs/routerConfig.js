@@ -15,6 +15,7 @@ import TipDetail from "../components/tips/tip-detail"
 import RecipesPage from "../components/recipes/recipes-page"
 import Approval from "../components/recipes/approval"
 import AddRecipe from "../components/recipes/add-recipe"
+import RecipeEditForm from "../components/management/recipe-edit"
 
 const publicRouter = [
     {
@@ -81,7 +82,7 @@ const privateRouter = [
     },
     {
         path: "/recipe/add",
-        element: <AddRecipe/>,
+        element: <AddRecipe />,
         roles: ["ADMIN", "SUPERADMIN"],
     }
 ]
@@ -100,6 +101,11 @@ const evaluateRouter = [
     {
         path: "/recipe/approval",
         element: <Approval />,
+        roles: ["ADMIN", "SUPERADMIN"]
+    },
+    {
+        path: "/recipe/edit/:idRecipe",
+        element: <RecipeEditForm />,
         roles: ["ADMIN", "SUPERADMIN"]
     }
 ]

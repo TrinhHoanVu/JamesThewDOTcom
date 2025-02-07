@@ -5,8 +5,10 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import { DataContext } from "../../context/DatabaseContext";
 import IngredientCard from "./ingredient-card";
+import { useLocation, useNavigate } from "react-router-dom";
 
-function AddRecipe({ onClose, reloadTips, IsApproved, title = "Add recipe successfully!" }) {
+
+function AddRecipe({ title = "Add recipe successfully!" }) {
     const [name, setName] = useState("");
     const [description, setDescription] = useState(() => EditorState.createEmpty());
     const [recipeNameList, setRecipeNameList] = useState([]);
@@ -14,35 +16,45 @@ function AddRecipe({ onClose, reloadTips, IsApproved, title = "Add recipe succes
     const [isPublic, setIsPublic] = useState(true);
     const [ingredients, setIngredients] = useState([]);
     const [selectedIngredients, setSelectedIngredients] = useState([]);
-    const [showDropdown, setShowDropdown] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [loadingPost, setLoadingPost] = useState(false);
     const [admin, setAdmin] = useState([]);
     const [ingredientList, setIngredientList] = useState([]);
+
+    const location = useLocation();
+    const navigate = useNavigate()
+    const [isApproved, setIsApproved] = useState(null);
+
     const editorRef = useRef();
 
     useEffect(() => {
-        fetchCurrentAdmin();
-        fetchRecipeNames();
-        fetchIngredients();
-        fetchIngredientList()
+        try {
+            fetchCurrentAdmin();
+            fetchRecipeNames();
+            fetchIngredients();
+            fetchIngredientList()
+            setIsApproved(location.state?.isApproved)
+        } catch (err) { console.log(err) }
     }, []);
 
     const fetchRecipeNames = async () => {
         try {
             const response = await axios.get("http://localhost:5231/api/Recipe/getAllRecipeNames");
-            setRecipeNameList(response.data.$values);
-            console.log(response.data.$values)
+            const nameList = response.data.$values
+            const existingNames = nameList.map(item => item.toLowerCase());
+            setRecipeNameList(existingNames);
         } catch (err) { console.log(err); }
     };
 
     const fetchIngredientList = async () => {
         try {
             const response = await axios.get("http://localhost:5231/api/Recipe/getAllIngredient")
-
-            setIngredientList(response.data.$values)
-            console.log(ingredientList)
+            const ingredientsWithQuantity = response.data.$values.map(item => ({
+                ...item,
+                quantity: 0,
+            }));
+            setIngredientList(ingredientsWithQuantity);
         } catch (err) { console.log(err) }
     }
     const fetchCurrentAdmin = async () => {
@@ -60,11 +72,13 @@ function AddRecipe({ onClose, reloadTips, IsApproved, title = "Add recipe succes
         } catch (err) { console.log(err); }
     };
 
-    const handleIngredientSelect = (ingredient) => {
-        if (ingredient && !selectedIngredients.includes(ingredient)) {
-            setSelectedIngredients([...selectedIngredients, ingredient]);
+    const handleIngredientSelect = (ingredientName) => {
+        const ingredient = ingredientList.find(item => item.name === ingredientName);
+        if (ingredient && !selectedIngredients.some(item => item.name === ingredientName)) {
+            setSelectedIngredients([...selectedIngredients, { ...ingredient, quantity: 0 }]);
         }
     };
+
 
     const handleIngredientRemove = (ingredient) => {
         setSelectedIngredients(selectedIngredients.filter((item) => item !== ingredient));
@@ -73,39 +87,114 @@ function AddRecipe({ onClose, reloadTips, IsApproved, title = "Add recipe succes
     const validate = () => {
         const errors = {};
         if (!name.trim()) errors.name = "Name is required.";
-        if (recipeNameList.includes(name)) errors.name = "This name has already been taken.";
+        if (recipeNameList.includes(name.toLocaleLowerCase())) errors.name = "This name has already been taken.";
         if (!description.getCurrentContent().hasText()) errors.description = "Description is required.";
+        const missingQuantities = selectedIngredients.filter(item => !item.quantity || item.quantity <= 0);
+        if (missingQuantities.length > 0) {
+            errors.ingredients = `Please enter a quantity for: ${missingQuantities.map(item => item.name).join(", ")}`;
+        }
         return errors;
     };
 
     const handleSave = async (e) => {
         e.preventDefault();
-        const validationErrors = validate();
-        if (Object.keys(validationErrors).length > 0) {
-            Swal.fire({ icon: "error", title: "Validation Error", text: Object.values(validationErrors).join("\n") });
-            return;
-        }
+
         try {
+            const validationErrors = validate();
+            if (Object.keys(validationErrors).length > 0) {
+                Swal.fire({ icon: "error", title: "Validation Error", text: Object.values(validationErrors).join("\n") });
+                return;
+            }
+
+            Swal.fire({
+                title: "Saving...",
+                text: "Please wait while we save the recipe.",
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
             setLoadingPost(true);
-            await axios.post("http://localhost:5231/api/Recipe/addRecipe", {
+
+            const addRecipeResponse = await axios.post("http://localhost:5231/api/Recipe/addRecipe", {
                 Name: name.trim(),
                 Description: description.getCurrentContent().getPlainText(),
                 IsPublic: isPublic,
-                IsApproved: IsApproved,
+                IsApproved: isApproved,
                 IdAccountPost: admin.idAccount,
             });
+
+            console.log(addRecipeResponse.data)
+
+            if (!addRecipeResponse.data) {
+                throw new Error("Failed to add recipe.");
+            }
+
+            const recipeResponse = await axios.get(`http://localhost:5231/api/Recipe/detailByName/${name}`);
+            if (!recipeResponse.data || !recipeResponse.data.recipe) {
+                throw new Error("Failed to fetch recipe ID.");
+            }
+
+            const idRecipe = recipeResponse.data.recipe.idRecipe;
+
+            const data = {
+                recipeId: idRecipe,
+                ingredients: selectedIngredients.map(item => ({
+                    ingredientID: item.idIngredient,
+                    quantity: item.quantity
+                }))
+            };
+
+            try {
+                await axios.post("http://localhost:5231/api/Recipe/addIngredientsToRecipe", data);
+            } catch (err) {
+                console.log(err.message)
+            }
+
             setLoadingPost(false);
-            Swal.fire({ icon: "success", title, showConfirmButton: false, timer: 1500 }).then(() => window.location.reload());
+            Swal.fire({ icon: "success", title: "Recipe added successfully!", showConfirmButton: false, timer: 1500 })
+                .then(() => {
+                    localStorage.setItem("managementTab", "recipe");
+                    navigate("/management", {
+                        state: { isProfile: false, isContest: false, isRecipe: true, isTip: false, isPassword: false }
+                    })
+                    window.location.reload();
+                });
+
         } catch (err) {
-            Swal.fire({ icon: "error", title: "Failed to add Recipe", text: "Please try again later." });
+            console.error(err);
+
+            Swal.fire({ icon: "error", title: "Failed to add Recipe", text: err.message || "Please try again later." });
+
+            setLoadingPost(false);
         }
     };
+
 
     if (loading) return <p>Loading...</p>;
     if (error) return <p>{error}</p>;
 
     return (
-        <div style={{ display: "flex", flexDirection: "column" }}>
+        <div style={{ maxHeight: "100vh", marginTop: "10px" }}>
+            <div style={{
+                textAlign: "center", display: "flex", alignItems: "center",
+                justifyContent: "space-between", flexDirection: "row", height: "30px",
+                width: "100%"
+            }}>
+                <div style={{ textAlign: "center", width: "97%" }}>
+                    <h2>Create New Recipe</h2>
+                </div>
+                <button style={{
+                    height: "20px", width: "3%", cursor: "pointer",
+                    background: "none", border: "none", fontSize: "15px", paddingRight: "50px"
+                }}
+                    onClick={() =>
+                        navigate("/management", {
+                            state: { isProfile: false, isContest: false, isRecipe: true, isTip: false }
+                        })
+                    }>Back</button>
+            </div>
             <div style={{
                 width: "100vw", height: "100vh", display: "flex", padding: "20px", boxSizing: "border-box",
                 background: "linear-gradient(to top, rgba(255, 126, 95, 0.5), #ffffff)"
@@ -127,7 +216,7 @@ function AddRecipe({ onClose, reloadTips, IsApproved, title = "Add recipe succes
                         <br /><br />
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                        <label>Description:</label>
+                        <label>Cooking Procedure:</label>
                         <div style={{
                             border: "1px solid #ddd", height: "300px", padding: "10px",
                             backgroundColor: "rgba(255, 255, 255, 0.2)"
@@ -141,11 +230,11 @@ function AddRecipe({ onClose, reloadTips, IsApproved, title = "Add recipe succes
                     <div style={{ marginBottom: "10px" }}>
                         <select
                             onChange={(e) => handleIngredientSelect(e.target.value)}
-                            style={{ width: "100%", padding: "8px", backgroundColor: "transparent" }}
+                            style={{ width: "100%", padding: "8px", backgroundColor: "transparent", marginTop: "10px" }}
                         >
                             <option value="">Select an ingredient</option>
-                            {ingredients.map((ingredient, index) => (
-                                <option key={index} value={ingredient}>{ingredient}</option>
+                            {ingredientList.map((ingredient, index) => (
+                                <option key={index} value={ingredient.name}>{ingredient.name}</option>
                             ))}
                         </select>
                     </div>
@@ -153,7 +242,7 @@ function AddRecipe({ onClose, reloadTips, IsApproved, title = "Add recipe succes
                     {selectedIngredients.length > 0 && (
                         <div className="ingredient-card-wrapper">
                             {selectedIngredients.map((ingredient, index) => (
-                                <IngredientCard key={index} name={ingredient} handleIngredientRemove={handleIngredientRemove} />
+                                <IngredientCard key={index} name={ingredient.name} handleIngredientRemove={handleIngredientRemove} />
                             ))}
                         </div>
                     )}
@@ -170,15 +259,20 @@ function AddRecipe({ onClose, reloadTips, IsApproved, title = "Add recipe succes
                                 </thead>
                                 <tbody>
                                     {selectedIngredients.map((ingredientName, index) => {
-                                        const ingredient = ingredientList.find(item => item.name === ingredientName);
+                                        const ingredient = ingredientList.find(item => item.name === ingredientName.name);
+                                        console.log(selectedIngredients)
                                         return (
                                             <tr key={index}>
-                                                <td style={{ padding: "10px", border: "1px solid #ddd" }}>{ingredientName}</td>
+                                                <td style={{ padding: "10px", border: "1px solid #ddd" }}>{ingredientName.name}</td>
                                                 <td style={{ padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>
                                                     <input type="number" min={0}
                                                         className="add-ingredient-table"
+                                                        defaultValue={0}
                                                         onChange={(e) => {
-                                                            const value = Math.max(0, e.target.value); 
+                                                            const value = Math.max(0, e.target.value);
+                                                            setSelectedIngredients(selectedIngredients.map(item =>
+                                                                item.name === ingredient.name ? { ...item, quantity: value } : item
+                                                            ));
                                                         }}
                                                         style={{ width: "40%", textAlign: "center" }} />
                                                 </td>
@@ -195,7 +289,7 @@ function AddRecipe({ onClose, reloadTips, IsApproved, title = "Add recipe succes
                     )}
 
                     <div>
-                        <button onClick={handleSave} style={{ width: "100%", padding: "10px", marginTop: "20px", backgroundColor: "#ffc107", border: "none", cursor: "pointer" }}>Save</button>
+                        <button onClick={handleSave} className="add-recipe-submit-button">Save</button>
                         {loadingPost && <p style={{ color: "blue" }}>Saving contest, please wait...</p>}
                     </div>
                 </div>
