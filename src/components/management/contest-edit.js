@@ -34,7 +34,8 @@ function ContestEditForm({ idContest, onClose, reloadContests }) {
     const fetchContestNames = async () => {
         try {
             const response = await axios.get("http://localhost:5231/api/Contest/getAllContestNames")
-            setContestNameList(response.data.$values)
+            const lowerCaseNames = response.data.$values.map(name => name.toLowerCase());
+            setContestNameList(lowerCaseNames);
         } catch (err) { console.log(err) }
     }
 

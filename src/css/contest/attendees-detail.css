@@ -51,7 +51,11 @@
 }
 
 .comment-column {
-    width: 75%;
+    width: 55%;
+}
+
+.ingredients-column {
+    width: 25%;
 }
 
 .likes-column {

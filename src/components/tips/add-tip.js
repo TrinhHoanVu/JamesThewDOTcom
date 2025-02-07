@@ -42,7 +42,6 @@ function AddTip({ onClose, reloadTips, IsApproved, title = 'Add tip successfully
         try {
             const respone = await axios.get(`http://localhost:5231/api/Account/${tokenInfor.email}`);
             setAdmin(respone.data)
-            console.log(admin)
         } catch (error) { console.log(error) }
         finally {
             setLoading(false);
@@ -130,18 +129,21 @@ function AddTip({ onClose, reloadTips, IsApproved, title = 'Add tip successfully
                     />
                     {errors.name && <span style={{ color: "red" }}>{errors.name}</span>}
                 </div>
-                <div style={{ marginBottom: "45px", height: "50px" }}>
-                    <label htmlFor="status">Status:</label>
-                    <select
-                        id="status"
-                        value={isPublic ? "true" : "false"}
-                        onChange={(e) => setIsPublic(e.target.value === "true")}
-                        style={{ width: "100%", padding: "8px", margin: "5px 0" }}
-                    >
-                        <option value="true">Public</option>
-                        <option value="false">Private</option>
-                    </select>
-                </div>
+                {console.log(admin)}
+                {(admin.role === "ADMIN" || admin.role === "SUPERADMIN") && (
+                    <div style={{ marginBottom: "45px", height: "50px" }}>
+                        <label htmlFor="status">Status:</label>
+                        <select
+                            id="status"
+                            value={isPublic ? "true" : "false"}
+                            onChange={(e) => setIsPublic(e.target.value === "true")}
+                            style={{ width: "100%", padding: "8px", margin: "5px 0" }}
+                        >
+                            <option value="true">Public</option>
+                            <option value="false">Private</option>
+                        </select>
+                    </div>
+                )}
 
                 <div style={{
                     marginBottom: "15px", display: "flex",

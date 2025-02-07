@@ -80,8 +80,8 @@ function AddRecipe({ title = "Add recipe successfully!" }) {
     };
 
 
-    const handleIngredientRemove = (ingredient) => {
-        setSelectedIngredients(selectedIngredients.filter((item) => item !== ingredient));
+    const handleIngredientRemove = (ingredientName) => {
+        setSelectedIngredients(selectedIngredients.filter((item) => item.name !== ingredientName));
     };
 
     const validate = () => {
@@ -260,7 +260,6 @@ function AddRecipe({ title = "Add recipe successfully!" }) {
                                 <tbody>
                                     {selectedIngredients.map((ingredientName, index) => {
                                         const ingredient = ingredientList.find(item => item.name === ingredientName.name);
-                                        console.log(selectedIngredients)
                                         return (
                                             <tr key={index}>
                                                 <td style={{ padding: "10px", border: "1px solid #ddd" }}>{ingredientName.name}</td>

@@ -110,47 +110,38 @@ function RecipeEditForm() {
 
     const handleIngredientRemove = (ingredient) => {
         console.log(ingredientList)
-        setSelectedIngredients(selectedIngredients.filter((item) => item !== ingredient));
+        setSelectedIngredients(selectedIngredients.filter((item) => item.name !== ingredient));
+
     };
 
     const handleSave = async (e) => {
         e.preventDefault();
 
+        setLoadingPost(true);
+
         try {
-            const validationErrors = validate();
-            if (Object.keys(validationErrors).length > 0) {
-                setErrors(validationErrors);
-                return;
-            }
-            try {
-                const descriptionText = description.getCurrentContent().getPlainText();
-                setLoadingPost(true)
-                await axios.put(`http://localhost:5231/api/Tips/update/${idRecipe}`, {
-                    name,
-                    description: descriptionText,
-                    isPublic: isPublic
-                });
+            const descriptionText = description.getCurrentContent().getPlainText();
+            await axios.put(`http://localhost:5231/api/Recipe/updateRecipe/${idRecipe}`, {
+                name,
+                description: descriptionText,
+                isPublic
+            });
 
-                setLoadingPost(false)
+            await axios.put(`http://localhost:5231/api/Recipe/updateRecipeIngredients/${idRecipe}`, {
+                ingredients: selectedIngredients.map(item => ({
+                    ingredientID: item.idIngredient,
+                    quantity: item.quantity
+                }))
+            });
 
-                localStorage.setItem("managementTab", "recipe");
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Tip updated successfully!',
-                    showConfirmButton: false,
-                    timer: 1500
-                }).then(() => {
-                    window.location.reload();
-                });
-            } catch (err) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Failed to update recipe',
-                    text: 'Please try again later.',
-                });
-                setLoading(false)
-            }
-        } catch (er) { console.log(er) }
+            Swal.fire({ icon: 'success', title: 'Recipe updated successfully!', timer: 1500 })
+                .then(() => navigate("/management", { state: { isRecipe: true } }));
+
+        } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Failed to update recipe', text: 'Please try again later.' });
+        } finally {
+            setLoadingPost(false);
+        }
     };
 
     const handleIngredientSelect = (ingredientName) => {
@@ -256,7 +247,6 @@ function RecipeEditForm() {
                                 <tbody>
                                     {selectedIngredients.map((ingredientName, index) => {
                                         const ingredient = ingredientList.find(item => item.name === ingredientName.name);
-
                                         return (
                                             <tr key={index}>
                                                 <td style={{ padding: "10px", border: "1px solid #ddd" }}>{ingredientName.name}</td>
