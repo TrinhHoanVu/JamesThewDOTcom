@@ -46,6 +46,8 @@ function Evaluation() {
     const [tableCompare, setTableCompare] = useState(false);
     const [checkedState, setCheckedState] = useState();
     const [contest, setContest] = useState({});
+    const [ingredientList, setIngredientList] = useState([]);
+
 
     useEffect(() => {
         try {
@@ -53,8 +55,8 @@ function Evaluation() {
                 setTimeout(() => {
                     $("#contestTable").DataTable({
                         destroy: true,
-                        pageLength: 5,
-                        lengthMenu: [5, 10],
+                        pageLength: 4,
+                        lengthMenu: [4],
                     });
                 }, 500);
             }
@@ -70,10 +72,13 @@ function Evaluation() {
     });
 
     useEffect(() => {
-        if (contestId) {
-            fetchAttendeesList(contestId);
-            fetchContest()
-        }
+        try {
+            if (contestId) {
+                fetchAttendeesList(contestId);
+                fetchContest()
+                fetchIngredients()
+            }
+        } catch (err) { console.log(err) }
     }, [contestId]);
 
     useEffect(() => {
@@ -89,22 +94,33 @@ function Evaluation() {
         }
     };
 
+    const fetchIngredients = async () => {
+        try {
+            const response = await axios.get("http://localhost:5231/api/Recipe/getAllIngredient")
+            setIngredientList(response.data.$values)
+        } catch (err) { console.log(err) }
+    }
+
     const fetchAttendeesList = async (contestId) => {
         try {
-            const response = await axios.get(`http://localhost:5231/api/Contest/getTopComments`, {
-                params: { contestId: contestId }
-            });
+            const response = await axios.get(`http://localhost:5231/api/Contest/getApprovedRecipes/${contestId}`);
 
             if (response.data) {
                 setAttendeesList(response.data.$values || []);
+                // console.log("Attendees list:", response.data.$values);
             }
         } catch (err) {
             console.error("Error fetching attendees list:", err);
-            Swal.fire("Error", "Failed to load attendees. Please try again.", "error");
+            Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: "Failed to load attendees. Please try again."
+            });
         }
     };
 
     const addCommentsToCompare = (index) => {
+        const recipe = attendeesList[index];
 
         setCheckedState((prevState) => {
             const updatedState = [...prevState];
@@ -116,20 +132,25 @@ function Evaluation() {
             let updatedComments;
 
             try {
-                const isCommentSelected = prevSelectedComments.some(comment => comment.content === attendeesList[index].content);
+                const isRecipeSelected = prevSelectedComments.some(
+                    (comment) => comment.name === recipe.name
+                );
 
-                if (isCommentSelected) {
-                    updatedComments = prevSelectedComments.filter(comment => comment.content !== attendeesList[index].content);
+                if (isRecipeSelected) {
+                    updatedComments = prevSelectedComments.filter(
+                        (comment) => comment.name !== recipe.name
+                    );
                 } else {
-                    updatedComments = [...prevSelectedComments, attendeesList[index]];
+                    updatedComments = [...prevSelectedComments, recipe];
                     if (updatedComments.length > 3) updatedComments = updatedComments.slice(1);
                 }
 
                 if (updatedComments.length === 0) {
                     setTableCompare(false);
                 }
+
             } catch (err) {
-                console.log(err)
+                console.log(err);
             }
 
             return updatedComments;
@@ -180,7 +201,7 @@ function Evaluation() {
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     const promises = markedAttendees.map(attendee =>
-                        axios.put(`http://localhost:5231/api/Contest/updateMark/${attendee.idComment}`, {
+                        axios.put(`http://localhost:5231/api/Contest/updateMark/${attendee.idRecipe}`, {
                             mark: attendee.mark
                         })
                     );
@@ -196,30 +217,40 @@ function Evaluation() {
         }
     };
 
-
     const handleSaveMark = () => {
         try {
-            setAttendeesList((prevAttendeesList) =>
-                prevAttendeesList.map((attendee) => {
-                    const selectedComment = selectedComments.find((comment) => comment.content === attendee.content);
+            setAttendeesList((prevAttendeesList) => {
+                const updatedList = prevAttendeesList.map((attendee) => {
+                    const selectedComment = selectedComments.find((comment) => {
+                        console.log("Attendee idRecipe:", attendee.idRecipe);
+                        console.log("Selected comment idRecipe:", comment.idRecipe);
+                        return comment.idRecipe === attendee.idRecipe;
+                    });
+
                     if (selectedComment) {
                         return { ...attendee, mark: selectedComment.mark };
                     }
                     return attendee;
-                })
-            );
+                });
+
+                console.log("Updated Attendees List:", updatedList); // Kiểm tra giá trị mới
+                return [...updatedList]; // Tạo mảng mới để React nhận diện sự thay đổi
+            });
+
             Swal.fire({
                 icon: 'success',
                 title: 'Marks have been updated successfully!',
                 showConfirmButton: false,
                 timer: 1500
             });
+
             setSelectedComments([]);
             setTableCompare(false);
         } catch (error) {
-            console.log(error)
+            console.log(error);
         }
     };
+
 
     const handleConfirmWinner = async () => {
         if (!attendeesList || attendeesList.length === 0) {
@@ -228,15 +259,15 @@ function Evaluation() {
         }
 
         const winner = attendeesList.reduce((max, attendee) => (attendee.mark > max.mark ? attendee : max), attendeesList[0]);
-
-        if (!winner || !winner.idComment) {
+        console.log(winner)
+        if (!winner || !winner.idRecipe) {
             Swal.fire("Error!", "Unable to determine the winner.", "error");
             return;
         }
 
         const result = await Swal.fire({
             title: "Confirm Winner",
-            text: `Are you sure you want to confirm "${winner.account.name}" as the winner?`,
+            text: `Are you sure you want to confirm "${winner.name}" recipe as the winner?`,
             icon: "warning",
             showCancelButton: true,
             confirmButtonText: "Yes, Confirm!",
@@ -285,7 +316,8 @@ function Evaluation() {
                         <tr>
                             <th className="select-column"></th>
                             <th className="name-column">Name</th>
-                            <th className="comment-column">Comment</th>
+                            <th className="comment-column">Cooking Procedure</th>
+                            <th className="ingredients-column">Ingredients</th>
                             <th className="likes-column">Likes</th>
                             <th className="evaluate-column">Mark</th>
                         </tr>
@@ -297,20 +329,28 @@ function Evaluation() {
                                     <td style={{ textAlign: "center" }} onClick={() => addCommentsToCompare(index)}>
                                         {checkedState[index] ? <FaCheck /> : <div></div>}
                                     </td>
-                                    <td>{attendee.account.name}</td>
-                                    <td>{attendee.content}</td>
+                                    <td>{attendee.name}</td>
+                                    <td>{attendee.description}</td>
+                                    <td>
+                                        {attendee.recipeIngredients.$values.map((ingredientId, index) => {
+                                            const ingredient = ingredientList.find(ingredient => ingredient.idIngredient === ingredientId.ingredientID);
+                                            // console.log(ingredientList)
+                                            // console.log(ingredientId.recipeId)
+                                            return ingredient ? <div key={index}>{ingredient.name} {ingredientId.quantity} {ingredient.unit.trim()}</div> :
+                                                <div key={index}>Unknown Ingredient</div>;
+                                        })}
+                                    </td>
                                     <td style={{ textAlign: "left" }}>{attendee.likes}</td>
                                     <td>
                                         <input type="number"
                                             className="evaluate-input"
                                             min="1"
                                             max="10"
-                                            defaultValue={attendee.mark}
+                                            value={attendee.mark}
                                             onInput={(e) => {
                                                 if (e.target.value < 1) e.target.value = 1;
                                                 if (e.target.value > 10) e.target.value = 10;
                                             }}
-                                            disabled={!!contest.winner}
                                             onChange={(e) => { attendee.mark = e.target.value }} />
                                     </td>
                                 </tr>
@@ -342,7 +382,7 @@ function Evaluation() {
                     <div className="selected-comments-container" ref={compareTableRef}>
                         <div style={{ textAlign: "center", display: "flex", alignItems: "center", justifyContent: "space-between", flexDirection: "row", height: "30px" }}>
                             <div style={{ textAlign: "center", width: "97%" }}>
-                                <h2>Selected Comments</h2>
+                                <h2>Selected Recipes</h2>
                             </div>
                             <span style={{
                                 cursor: "pointer", width: "100px",
@@ -354,7 +394,8 @@ function Evaluation() {
                             <thead>
                                 <tr>
                                     <th className="compare-name-column">Name</th>
-                                    <th className="comment-name-column">Comment</th>
+                                    <th className="comment-name-column">Cooking Procedure</th>
+                                    <th className="ingredients-column">Ingredients</th>
                                     <th className="likes-name-column">Likes</th>
                                     <th className="evaluate-name-column">Mark</th>
                                 </tr>
@@ -362,8 +403,15 @@ function Evaluation() {
                             <tbody>
                                 {selectedComments.map((comment, index) => (
                                     <tr key={index}>
-                                        <td>{comment.account.name}</td>
-                                        <td>{comment.content}</td>
+                                        <td>{comment.name}</td>
+                                        <td>{comment.description}</td>
+                                        <td>
+                                            {comment.recipeIngredients.$values.map((ingredientId, index) => {
+                                                const ingredient = ingredientList.find(ingredient => ingredient.idIngredient === ingredientId.ingredientID);
+                                                return ingredient ? <div key={index}>{ingredient.name} {ingredientId.quantity} {ingredient.unit.trim()}</div> :
+                                                    <div key={index}>Unknown Ingredient</div>;
+                                            })}
+                                        </td>
                                         <td style={{ textAlign: "left" }}>{comment.likes}</td>
                                         <td>
                                             <div style={{ display: "flex", flex: "column", alignItems: "end", gap: "20px" }}>
@@ -376,7 +424,14 @@ function Evaluation() {
                                                         if (e.target.value < 1) e.target.value = 1;
                                                         if (e.target.value > 10) e.target.value = 10;
                                                     }}
-                                                    onChange={(e) => { comment.mark = e.target.value }}
+                                                    onChange={(e) => {
+                                                        const newValue = e.target.value;
+                                                        setSelectedComments((prevSelectedComments) =>
+                                                            prevSelectedComments.map((item, idx) =>
+                                                                idx === index ? { ...item, mark: newValue } : item
+                                                            )
+                                                        );
+                                                    }}
                                                 />
                                             </div>
                                         </td>
